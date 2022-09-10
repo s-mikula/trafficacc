@@ -8,6 +8,7 @@ library(purrr, quietly = TRUE)
 library(stringr, quietly = TRUE)
 library(sf, quietly = TRUE)
 library(fs, quietly = TRUE)
+library(readr, quietly = TRUE)
 
 library(shiny, quietly = TRUE)
 library(shinydashboard, quietly = TRUE)
@@ -82,7 +83,7 @@ list_options <- function(){
 # Note: The function is design to work with parameters delivered by list_options()
 # 
 
-read_shinyapp <- function(district = NULL, profile = "default", period_start = NULL, period_end = NULL){
+read_hotspots <- function(district = NULL, profile = "default", period_start = NULL, period_end = NULL){
   rdsfile <- stringr::str_c(
     DATA_REPOSITORY,
     "shiny_",
@@ -93,7 +94,7 @@ read_shinyapp <- function(district = NULL, profile = "default", period_start = N
     ".rds"
   )
   
-  readRDS(rdsfile)
+  read_rds(rdsfile)
 }
 
 #
@@ -115,7 +116,7 @@ read_accidents <- function(district = NULL){
     ".rds"
   )
   
-  readRDS(rdsfile)
+  read_rds(rdsfile)
 }
 
 #
@@ -153,87 +154,6 @@ get_delta <- function(p1,p2){
   }
   
   str_c(nch," (",chp,")")
-}
-
-# Old (to be removed)
-
-select_data_accidents <- function(tabs,periodfilter,periodfilterrange,man_period,
-                                  man_filter, area_admin, p1 = TRUE,
-                                  d_accidents, d_cars, d_pedestrians,
-                                  d_hotspots_accidents,
-                                  d_hs,
-                                  hotspotid=NULL){
-  
-  
-  if(tabs == "accidents" & periodfilter){
-    man_period_y1 <- min(periodfilterrange) %>% as.Date()
-    man_period_y2 <- max(periodfilterrange) %>% as.Date()
-  }else{
-    
-    if(man_period == "man_period_state"){
-      man_period_y1 <- as.character(year(Sys.Date())-4) %>% str_c(.,"-1-1") %>% as.Date()  #-1
-      man_period_y2 <- as.character(year(Sys.Date())-2) %>% str_c(.,"-12-31") %>% as.Date()   #-1
-      
-      if(!p1){
-        man_period_y1 <- as.character(year(Sys.Date())-7) %>% str_c(.,"-1-1") %>% as.Date() 
-        man_period_y2 <- as.character(year(Sys.Date())-5) %>% str_c(.,"-12-31") %>% as.Date()  
-      }
-      
-    }else{
-      man_period_y1 <- Sys.Date() - months(6) - years(2)
-      man_period_y2 <- Sys.Date()  - years(2)
-      
-      if(!p1){
-        man_period_y1 <- Sys.Date() - months(18) - years(2)
-        man_period_y2 <- Sys.Date() - months(12) - years(2)
-      }
-    }
-  }
-  
-  # Všechny nehody
-  if(man_filter == "man_filter_all"){
-    keep <- d_accidents %>% pull(p1)
-  }
-  
-  # nehody s motorkou
-  if(man_filter == "man_filter_bike"){
-    keep <- d_cars %>% filter(p44 %in% c("0","1","2")) %>% pull(p1)
-  }
-  
-  # Nehody s jízdním kolem
-  if(man_filter == "man_filter_bike"){
-    keep <- d_cars %>% filter(p44=="13") %>% pull(p1)
-  }
-  
-  # Nehody s chodcem
-  if(man_filter == "man_filter_pedestrian"){
-    keep <- d_pedestrians %>% pull(p1)
-  }
-  
-  # Ridic pod vlivem alkoholu
-  if(man_filter == "man_filter_alc"){
-    keep <- d_cars %>% filter(p57 %in% c("4","5")) %>% pull(p1)
-  }
-  
-  out <- d_accidents %>% 
-    filter(KOD_OKRES == area_admin) %>% 
-    filter(date >= man_period_y1) %>% 
-    filter(date <= man_period_y2) %>% 
-    filter(p1 %in% keep)
-  
-  if(!is.null(hotspotid)){
-    hacc <- d_hotspots_accidents %>%
-      left_join(d_hs, by = "hotspot") %>%
-      filter(hsn == hotspotid) %>%
-      pull(p1)
-    
-    out %>% 
-      filter(p1 %in% hacc) %>% 
-      return()
-  }else{
-    return(out)
-  }
-  
 }
 
 #### Define variables ####
@@ -547,60 +467,4 @@ obstacletype <- c(
   "8" = "překážka vzniklá\nstavební činností",
   "9" = "jiná překážka - plot,\nnásep, nástupní ostrůvek",
   "0" = "nepřichází v úvahu,\nnejde o srážku s pev.přek."
-)
-
-# Old
-man_priority_coices <- c(
-  "Celková škoda" = "man_priority_damage",
-  "Nějaká další možnost" = "man_priority_other" 
-)
-
-choices_p6 <- c(
-  "srážka s jedoucím nekolejovým vozidlem" = "1",
-  "srážka s vozidlem zaparkovaným, odstav." = "2",
-  "srážka s pevnou překážkou" = "3",
-  "srážka s chodcem" = "4",
-  "srážka s lesní zvěří" = "5",
-  "srážka s domácím zvířetem" = "6",
-  "srážka s vlakem" = "7",
-  "srážka s tramvají" = "8",
-  "havárie" = "9",
-  "jiný druh nehody" = "0"
-)
-
-admin_areas <- c(
-  "Benešov"="40169","Beroun"="40177","Blansko"="40703",
-  "Brno-město"="40711","Brno-venkov"="40720","Bruntál"="40860",
-  "Břeclav"="40738","Česká Lípa"="40525","České Budějovice"="40282",
-  "Český Krumlov"="40291","Děčín"="40452","Domažlice"="40355",
-  "Frýdek-Místek"="40878","Havlíčkův Brod"="40657","Hodonín"="40746",
-  "Hradec Králové"="40568","Cheb"="40428","Chomutov"="40461","Chrudim"="40614",
-  "Jablonec nad Nisou"="40533","Jeseník"="40771","Jičín"="40576","Jihlava"="40665",
-  "Jindřichův Hradec"="40304","Karlovy Vary"="40436","Karviná"="40886",
-  "Kladno"="40185","Klatovy"="40363","Kolín"="40193","Kroměříž"="40827",
-  "Kutná Hora"="40207","Liberec"="40541","Litoměřice"="40479","Louny"="40487",
-  "Mělník"="40215","Mladá Boleslav"="40223","Most"="40495","Náchod"="40584",
-  "Nový Jičín"="40894","Nymburk"="40231","Olomouc"="40789","Opava"="40908",
-  "Ostrava-město"="40916","Pardubice"="40622","Pelhřimov"="40673","Písek"="40312",
-  "Plzeň-jih"="40380","Plzeň-město"="40371","Plzeň-sever"="40398","Praha"="40924",
-  "Praha-východ"="40240","Praha-západ"="40258","Prachatice"="40321","Prostějov"="40797",
-  "Přerov"="40801","Příbram"="40266","Rakovník"="40274","Rokycany"="40401",
-  "Rychnov nad Kněžnou"="40592","Semily"="40550","Sokolov"="40444",
-  "Strakonice"="40339","Svitavy"="40631","Šumperk"="40819","Tábor"="40347",
-  "Tachov"="40410","Teplice"="40509","Trutnov"="40606","Třebíč"="40681",
-  "Uherské Hradiště"="40835","Ústí nad Labem"="40517","Ústí nad Orlicí"="40649",
-  "Vsetín"="40843","Vyškov"="40754","Zlín"="40851",
-  "Znojmo"="40762","Žďár nad Sázavou"="40690",
-  "Hlavní město Praha"="3018"#,"Jihočeský kraj"="3034","Jihomoravský kraj"="3115",
-  # "Karlovarský kraj"="3051","Kraj Vysočina"="3107","Královéhradecký kraj"="3085",
-  # "Liberecký kraj"="3077","Moravskoslezský kraj"="3140","Olomoucký kraj"="3123",
-  # "Pardubický kraj"="3093","Plzeňský kraj"="3042","Středočeský kraj"="3026",
-  # "Ústecký kraj"="3069","Zlínský kraj"="3131"
-)
-
-man_filter_choices <- c("Všechny"="man_filter_all",
-                        "S účastí chodce"="man_filter_pedestrian",
-                        "S účastí cyklisty"="man_filter_bike",
-                        "S účastí motocyklisty"="man_filter_motobike",
-                        "Pod vlivem alkoholu"="man_filter_alc"
 )

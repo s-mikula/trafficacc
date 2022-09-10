@@ -1,0 +1,598 @@
+---
+title: "Přehled dopravních nehod"
+output: html_document
+params:
+  district: NA
+  data_accidents_p1: NA
+  data_accidents_p2: NA
+  period: NA
+---
+
+```{r, echo = FALSE}
+library(dtplyr, quietly = TRUE)
+library(tibble, quietly = TRUE)
+library(dplyr, quietly = TRUE)
+library(tidyr, quietly = TRUE)
+library(lubridate, quietly = TRUE)
+library(purrr, quietly = TRUE)
+library(stringr, quietly = TRUE)
+library(sf, quietly = TRUE)
+library(fs, quietly = TRUE)
+library(readr, quietly = TRUE)
+library(ggplot2, quietly = TRUE)
+library(ggvis, quietly = TRUE)
+```
+
+```{r, echo=FALSE}
+period_p1 <- str_c(
+  strftime(params$period[1], format = "%d.%m.%Y"),
+  " - ",
+  strftime(params$period[2], format = "%d.%m.%Y")
+)
+
+# Duration of p1 in days
+    p2_length <- params$period[2] - params$period[1]
+    p2_length <- as.double(p2_length)
+    
+    # End date of comparison period (p2)
+    p2_end <- params$period[1]
+    p2_end <- p2_end - 1
+    
+    # Start date of comparison period (p2)
+    p2_start <- p2_end - p2_length
+    
+period_p2 <- str_c(
+  strftime(p2_start, format = "%d.%m.%Y"),
+  " - ",
+  strftime(p2_end, format = "%d.%m.%Y")
+)
+```
+
+
+
+Okres: `r params$district`
+
+Základní období: `r period_p1`
+
+Srovnávací období: `r period_p2`
+
+```{r, echo=FALSE, fig.align='center', fig.height=3}
+casualties <- c(
+  "casualties_pedestrian" = "chodec",
+  "casualties_car_driver" = "řidič osobního\nvozidla",
+  "casualties_car_crew" = "spolujezdec v\nosobním vozidle",
+  "casualties_bike_driver" = "cyklista",
+  "casualties_truck_driver" = "řidič nákladního\nvozidla",
+  "casualties_truck_crew" = "spolujezdec v\nnákladním vozidle",
+  "casualties_motobike_driver" = "motocyklista",
+  "casualties_motobike_crew" = "spolujezdec\nna motocyklu",
+  "casualties_other_driver" = "řidič jiného\ndopravního prostředku",
+  "casualties_other_crew" = "spolujezdec na jiném\ndopravním prostředku"
+)
+
+p1 <- params$data_accidents_p1 |>
+      sf::st_drop_geometry() |> 
+      dplyr::select(
+        starts_with("casualties")
+      ) |> 
+      dplyr::summarise(
+        across(
+          everything(),
+          sum
+        )
+      ) |> 
+      tidyr::pivot_longer(
+        everything()
+      )
+    
+    p2 <- params$data_accidents_p2 |>
+      sf::st_drop_geometry() |> 
+      dplyr::select(
+        starts_with("casualties")
+      ) |>
+      dplyr::summarise(
+        across(
+          everything(),
+          sum
+        )
+      ) |> 
+      tidyr::pivot_longer(
+        everything()
+      )
+    
+    dplyr::bind_rows(
+      dplyr::mutate(p1, period = "p1"),
+      dplyr::mutate(p2, period = "p2")
+    ) |>
+      dplyr::arrange(period,value) %>% 
+      dplyr::mutate(
+        name = factor(name, levels = unique(name)),
+        period = factor(period, levels = c("p2","p1"))
+      ) |>
+      ggplot(
+        aes(y = name, x = value, fill = period)
+      ) +
+      geom_col(
+        position = "dodge"
+      ) +
+      scale_x_continuous(
+        "Počet obětí"
+      ) +
+      scale_fill_brewer(
+        palette = "Set1",
+        breaks = c("p1","p2"),
+        labels = c(
+          "p1" = "Základní období",
+          "p2" = "Srovnávací období"
+        )
+      ) +
+      scale_y_discrete(
+        labels = casualties
+      ) +
+      labs(
+        title = "Oběti dopravních nehod"
+      ) +
+      theme_classic(
+        base_size = 10
+      ) +
+      theme(
+        legend.position = "right",
+        legend.title = element_blank(),
+        axis.title.y = element_blank()
+      )
+```
+
+
+```{r, echo=FALSE, fig.align='center', fig.height=3}
+faults <- c(
+  "1"="řidičem motorového\nvozidla",
+  "2"="řidičem nemotorového\nvozidla",
+  "3"="chodcem",
+  "4"="lesní a domácí zvěří",
+  "5"="jiným účastníkem\nsilničního provozu",
+  "6"="závadou komunikace",
+  "7"="technickou závadou\nvozidla",
+  "0"="jiné zavinení"
+)
+
+p1 <- params$data_accidents_p1 |>
+      sf::st_drop_geometry() |>
+      dplyr::group_by(
+        accident_fault
+      ) |> 
+      dplyr::summarise(
+        value = dplyr::n()
+      )
+    
+    p2 <- params$data_accidents_p2 |>
+      sf::st_drop_geometry() |> 
+      dplyr::group_by(
+        accident_fault
+      ) %>% 
+      dplyr::summarise(
+        value = dplyr::n()
+      )
+    
+    dplyr::bind_rows(
+      dplyr::mutate(p1, period = "p1"),
+      dplyr::mutate(p2, period = "p2")
+    ) %>% 
+      dplyr::arrange(period,value) |> 
+      dplyr::mutate(
+        accident_fault = factor(accident_fault, levels = unique(accident_fault)),
+        period = factor(period, levels = c("p2","p1"))
+      ) |>
+      ggplot(
+        aes(y = accident_fault, x = value, fill = period)
+      ) +
+      geom_col(
+        position = "dodge"
+      ) +
+      scale_x_continuous(
+        "Počet nehod"
+      ) +
+      scale_fill_brewer(
+        palette = "Set1",
+        breaks = c("p1","p2"),
+        labels = c(
+          "p1" = "Základní období",
+          "p2" = "Srovnávací období"
+        )
+      ) +
+      scale_y_discrete(
+        labels = faults
+      ) +
+      labs(
+        title = "Zavinění dopravních nehod"
+      ) +
+      theme_classic(
+        base_size = 10
+      ) +
+      theme(
+        legend.position = "right",
+        legend.title = element_blank(),
+        axis.title.y = element_blank()
+      )
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=3}
+causes <- c(
+"100" = "nezaviněná řidičem",
+"201" = "nepřizpůsobení rychlosti\nhustotě provozu",
+"202" = "nepřizpůsobení rychlosti\nviditelnosti",
+"203" = "nepřizpůsobení rychlosti\nvlastn. vozidla a nákladu",
+"204" = "nepřizpůsobení rychlosti\nstavu vozovky",
+"205" = "nepřizpůsobení rychlosti\ndopr.techn.stavu vozovky",
+"206" = "překročení předepsané rychlosti\nstanovené pravidly",
+"207" = "překročení rychlosti stanovené\ndopravní značkou",
+"208" = "nepřizpůsobení rychlosti\nbočnímu, nárazovému větru",
+"209" = "jiný druh nepřiměřené\nrychlosti",
+"301" = "předjíždění vpravo",
+"302" = "předjíždění bez dostatečného\nbočního odstupu",
+"303" = "předjíždění bez dostatečného\nrozhledu",
+"304" = "při předj. došlo k ohrož.\nprotijedoucího řidiče v.",
+"305" = "při předj. došlo k ohrož.\npředjížděného řidiče v.",
+"306" = "předjíždění vlevo vozidla\nodbočujícího vlevo",
+"307" = "předj. v místech, kde je\nto zakazáno dopr.značkou",
+"308" = "při předj. byla přejeta\npodélná čára souvislá",
+"309" = "bránění v předjíždění",
+"310" = "přehlédnutí již předjíždějícího\nsouběžně jed. voz.",
+"311" = "jiný druh nesprávného\npředjíždění",
+"401" = "jízda na červené světlo",
+"402" = "nedání předn. proti příkazu\nd.z. STŮJ DEJ PŘEDNOST",
+"403" = "nedání předn. proti příkazu\nd.z. DEJ PŘEDNOST",
+"404" = "nedání předn. vozidlu\npřijíždějícímu zprava",
+"405" = "nedání předn. při\nodbočování vlevo",
+"406" = "nedání předn. tramvaji,\nkterá odbočuje",
+"407" = "nedání předn. protijed.voz.\npři objíždění překážky",
+"408" = "nedání předn. při zařazování\ndo proudu jedouc.voz.",
+"409" = "nedání předn. při\nvjížděnína silnici",
+"410" = "nedání předn. při\notáčení nebo couvání",
+"411" = "nedání předn. při\npřejíždění z pruhu do pruhu",
+"412" = "nedání předn. chodci\nna vyznačeném přechodu",
+"413" = "nedání předn. při\nodboč.vlevo souběžně jedouc.voz.",
+"414" = "jiné nedání přednosti",
+"501" = "jízda po nespr.straně\nvozovky, vjetí do protisměru",
+"502" = "vyhýbání bez dostatečné\nboční vůle",
+"503" = "nedodržení bezpečné\nvzdálenosti za vozidlem",
+"504" = "nesprávné otáčení\nnebo couvání",
+"505" = "chyby při udání\nsměru jízdy",
+"506" = "bezohledná, agresivní,\nneohleduplná jízda",
+"507" = "náhlé bezdůvodné snížení\nrychlosti jízdy,zastavení",
+"508" = "řidič se plně nevěnoval\nřízení vozidla",
+"509" = "samovolné rozjetí\nnezajištěného vozidla",
+"510" = "vjetí na nezpevněnou\nkrajnici",
+"511" = "nezvládnutí řízení\nvozidla",
+"512" = "jízda (vjetí) jednosměrnou\nulicí, silnicí",
+"516" = "jiný druh nesprávného\nzpůsobu jízdy",
+"601" = "závada řízení",
+"602" = "závada provozní brzdy",
+"603" = "neúčinná nebo nefungující\nparkovací brzda",
+"604" = "optřebení běhounu pláště\npod stanovenou mez",
+"605" = "defekt pneumatiky - průrazem,\nnáhlým únikem vzd.",
+"606" = "závada osvětlovací soustavy\nvozidla",
+"607" = "nepřipoj./poškoz. spoj.\nhadice pro brzd.přípoj.voz.",
+"608" = "nesprávné uložení nákladu",
+"609" = "upadnutí, ztráta kola\nvozidla (i rezervního)",
+"610" = "zablokování kol v důsledku\nmech. závady vozidla",
+"611" = "lom závěsu kola, pružiny",
+"612" = "nazajištěná, poškozená\nbočnice (i u přívěsu)",
+"613" = "závada závěsu pro přívěs",
+"614" = "utržená spojovací hřídel",
+"615" = "jiná technická závada"
+)
+
+params$data_accidents_p1 |>
+      sf::st_drop_geometry() |>
+      dplyr::select(
+        accident_cause
+      ) |>
+      dplyr::group_by(
+        accident_cause
+      ) |>
+      dplyr::summarise(
+        value = dplyr::n()
+      ) |>
+      dplyr::slice_max(value, n = 5) |>
+      dplyr::arrange(value) |>
+      mutate(
+        accident_cause = factor(accident_cause, levels = accident_cause)
+      ) |>
+      ggplot(
+        aes(x = value, y = accident_cause)
+      ) +
+      geom_col(
+        fill = "#377eb8"
+      ) +
+      scale_x_continuous(
+        "Počet nehod"
+      ) +
+      scale_y_discrete(
+        labels = causes
+      ) +
+  labs(
+        title = "Nejčastější příčiny dopravních nehod"
+      ) +
+      theme_classic(
+        base_size = 10
+      ) +
+      theme(
+        legend.position = "right",
+        legend.title = element_blank(),
+        axis.title.y = element_blank()
+      )
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=3}
+params$data_accidents_p1 |>
+      sf::st_drop_geometry() |>
+      dplyr::filter(accident_dead > 0) |>
+      dplyr::select(
+        accident_cause,accident_dead
+      ) |>
+      dplyr::group_by(
+        accident_cause
+      ) |>
+      dplyr::summarise(
+        value = as.integer(sum(accident_dead, na.rm = TRUE))
+      ) |>
+      dplyr::slice_max(value, n = 5) |>
+      dplyr::arrange(value) |>
+      mutate(
+        accident_cause = factor(accident_cause, levels = accident_cause)
+      ) |>
+      ggplot(
+        aes(x = value, y = accident_cause)
+      ) +
+      geom_col(
+        fill = "#377eb8"
+      ) +
+      scale_x_continuous(
+        "Počet zemřelých"
+      ) +
+      scale_y_discrete(
+        labels = causes
+      ) +
+  labs(
+        title = "Nejtragičtější příčiny dopravních nehod"
+      ) +
+      theme_classic(
+        base_size = 10
+      ) +
+      theme(
+        legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.title.y = element_blank()
+      )
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=3}
+crashtype <- c(
+  "1" = "srážka s jedoucím\nnekolejovým vozidlem",
+"2" = "srážka s vozidlem\nzaparkovaným, odstav.",
+"3" = "srážka s pevnou\npřekážkou",
+"4" = "srážka s chodcem",
+"5" = "srážka s lesní zvěří",
+"6" = "srážka s domácím\nzvířetem",
+"7" = "srážka s vlakem",
+"8" = "srážka s tramvají",
+"9" = "havárie",
+"0" = "jiný druh nehody"
+)
+
+p1 <- params$data_accidents_p1 |>
+      sf::st_drop_geometry() |>
+      dplyr::filter(accident_type != 0) |>
+      dplyr::group_by(
+        accident_type
+      ) |> 
+      dplyr::summarise(
+        value = dplyr::n()
+      )
+    
+    p2 <- params$data_accidents_p2 |>
+      sf::st_drop_geometry() |> 
+      dplyr::filter(accident_type != 0) |>
+      dplyr::group_by(
+        accident_type
+      ) %>% 
+      dplyr::summarise(
+        value = dplyr::n()
+      )
+    
+    dplyr::bind_rows(
+      dplyr::mutate(p1, period = "p1"),
+      dplyr::mutate(p2, period = "p2")
+    ) %>% 
+      tidyr::complete(period,accident_type,fill = list(value = 0)) |>
+      dplyr::arrange(period,value) |> 
+      dplyr::mutate(
+        accident_type = factor(accident_type, levels = unique(accident_type)),
+        period = factor(period, levels = c("p2","p1"))
+      ) |>
+      ggplot(
+        aes(y = accident_type, x = value, fill = period)
+      ) +
+      geom_col(
+        position = "dodge"
+      ) +
+      scale_x_continuous(
+        "Počet nehod"
+      ) +
+      scale_fill_brewer(
+        palette = "Set1",
+        breaks = c("p1","p2"),
+        labels = c(
+          "p1" = "Základní období",
+          "p2" = "Srovnávací období"
+        )
+      ) +
+      scale_y_discrete(
+        labels = crashtype
+      ) +
+      labs(
+        title = "Druhy srážek"
+      ) +
+      theme_classic(
+        base_size = 10
+      ) +
+      theme(
+        legend.position = "right",
+        legend.title = element_blank(),
+        axis.title.y = element_blank()
+      )
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=3}
+obstacletype <- c(
+  "1" = "strom",
+  "2" = "sloup - telefonní, veř.\nosvětlení, el.vedení apod.",
+  "3" = "odrazník, patník, sloupek\nsměrový, dopr.značky ap.",
+  "4" = "svodidlo",
+  "5" = "překážka vzniklá provozem\njiného vozidla",
+  "6" = "zeď, pevná část mostů,\npodjezdů, tunelů apod.",
+  "7" = "závory železničního\npřejezdu",
+  "8" = "překážka vzniklá\nstavební činností",
+  "9" = "jiná překážka - plot,\nnásep, nástupní ostrůvek",
+  "0" = "nepřichází v úvahu,\nnejde o srážku s pev.přek."
+)
+
+p1 <- params$data_accidents_p1 |>
+      sf::st_drop_geometry() |>
+      dplyr::filter(accident_obstacle_type != 0) |>
+      dplyr::group_by(
+        accident_obstacle_type
+      ) |> 
+      dplyr::summarise(
+        value = dplyr::n()
+      )
+    
+    p2 <- params$data_accidents_p2 |>
+      sf::st_drop_geometry() |> 
+      dplyr::filter(accident_obstacle_type != 0) |>
+      dplyr::group_by(
+        accident_obstacle_type
+      ) |>
+      dplyr::summarise(
+        value = dplyr::n()
+      )
+    
+    dplyr::bind_rows(
+      dplyr::mutate(p1, period = "p1"),
+      dplyr::mutate(p2, period = "p2")
+    ) %>% 
+      tidyr::complete(period,accident_obstacle_type,fill = list(value = 0)) |>
+      dplyr::arrange(period,value) |> 
+      dplyr::mutate(
+        accident_obstacle_type = factor(accident_obstacle_type, levels = unique(accident_obstacle_type)),
+        period = factor(period, levels = c("p2","p1"))
+      ) |>
+      ggplot(
+        aes(y = accident_obstacle_type, x = value, fill = period)
+      ) +
+      geom_col(
+        position = "dodge"
+      ) +
+      scale_x_continuous(
+        "Počet nehod"
+      ) +
+      scale_fill_brewer(
+        palette = "Set1",
+        breaks = c("p1","p2"),
+        labels = c(
+          "p1" = "Základní období",
+          "p2" = "Srovnávací období"
+        )
+      ) +
+      scale_y_discrete(
+        labels = obstacletype
+      ) +
+      labs(
+        title = "Druhy srážek s pevnou překážkou"
+      ) +
+      theme_classic(
+        base_size = 10
+      ) +
+      theme(
+        legend.position = "right",
+        legend.title = element_blank(),
+        axis.title.y = element_blank()
+      )
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=3}
+params$data_accidents_p1 |>
+      sf::st_drop_geometry() |>
+      tidyr::drop_na(driver_age) |>
+      dplyr::mutate(
+        agecat = cut(driver_age, breaks = c(0,5,9,14,17,20,24,34,44,54,64,Inf))
+      ) |>
+      dplyr::group_by(
+        agecat,
+        .drop = FALSE
+      ) |> 
+      dplyr::summarise(
+        value = dplyr::n()
+      ) |>
+      ggplot(
+        aes(y = value, x = agecat)
+      ) +
+      geom_col(
+        fill = "#377eb8"
+      ) +
+      scale_x_discrete(
+        "Věk řidiče"
+      ) +
+      scale_y_continuous(
+        "Počet nehod"
+      ) +
+  labs(
+    title = "Věk viníků dopravních nehod"
+  ) +
+      theme_classic(
+        base_size = 10
+      ) +
+      theme(
+        legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.title.y = element_blank()
+      )
+```
+
+```{r, echo=FALSE, fig.align='center', fig.height=3}
+params$data_accidents_p1 |>
+      sf::st_drop_geometry() |>
+      tidyr::drop_na(driver_age) |>
+      dplyr::mutate(
+        agecat = cut(driver_age, breaks = c(0,5,9,14,17,20,24,34,44,54,64,Inf))
+      ) |>
+      dplyr::group_by(
+        agecat
+      ) |> 
+      dplyr::summarise(
+        value = sum(accident_dead)
+      ) |>
+      ggplot(
+        aes(y = value, x = agecat)
+      ) +
+      geom_col(
+        fill = "#377eb8"
+      ) +
+      scale_x_discrete(
+        "Věk řidiče"
+      ) +
+      scale_y_continuous(
+        "Počet zemřelých"
+      ) +
+  labs(
+    title =  "Věk viníků smrtelných nehod"
+  ) +
+      theme_classic(
+        base_size = 10
+      ) +
+      theme(
+        legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.title.y = element_blank()
+      )
+```

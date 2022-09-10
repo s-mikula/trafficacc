@@ -102,52 +102,31 @@ ui <- dashboardPage(
                          h1(textOutput("header_title")),
                          h4(textOutput("header_period")),
                          h4(textOutput("header_filteraccidents")),
-                         downloadButton("generate_report", "Report"),
+                         downloadButton("report_overview", "Report"),
                          width = 12
                        )
                 ),
                 column(3,
                        box(
-                         selectInput(
+                         dateRangeInput(
                            "menu_period",
-                           "Období:",
-                           unique(OPTIONS$period_menu),
-                           selected = PERIOD_preselected,
+                           "Období (od/do):",
+                           #unique(OPTIONS$period_menu),
+                           #selected = PERIOD_preselected,
+                           start = max(OPTIONS$period_start),
+                           end = max(OPTIONS$period_end),
+                           min = "2011-01-01",
+                           max = max(OPTIONS$period_end),
+                           format = "dd.mm.yyyy",
+                           language = "cs",
+                           separator = " do ",
                            width = '100%'
                          ),
-                         # selectInput(
-                         #   "menu_profile",
-                         #   "Prirotizace nehodových lokalit:",
-                         #   MENU$profile[MENU$profile %in% OPTIONS$profile],
-                         #   selected = "default",
-                         #   width = '100%'
-                         # ),
-                         # selectInput(
-                         #   "menu_filteraccidents",
-                         #   "Výběr dopravních nehod:",
-                         #   MENU$filteraccidents,
-                         #   selected = "all",
-                         #   width = '100%'
-                         # ),
                          width = 12
                        )
                 ),
                 column(3,
                        box(
-                         # selectInput(
-                         #   "menu_period",
-                         #   "Období:",
-                         #   unique(OPTIONS$period_menu),
-                         #   selected = PERIOD_preselected,
-                         #   width = '100%'
-                         # ),
-                         # selectInput(
-                         #   "menu_profile",
-                         #   "Prirotizace nehodových lokalit:",
-                         #   MENU$profile[MENU$profile %in% OPTIONS$profile],
-                         #   selected = "default",
-                         #   width = '100%'
-                         # ),
                          selectInput(
                            "menu_filteraccidents",
                            "Výběr dopravních nehod:",
@@ -258,8 +237,75 @@ ui <- dashboardPage(
                 )
               )
       ),
+      ##### UI: Hotspots #####
       tabItem(tabName = "hotspots",
-              fluidRow()
+              fluidRow(
+                column(3,
+                       box(
+                         selectInput(
+                           "menu_period_hotspots",
+                           "Období:",
+                           unique(OPTIONS$period_menu),
+                           selected = PERIOD_preselected,
+                           width = '100%'
+                         ),
+                         width = 12
+                       )
+                ),
+                column(3,
+                       box(
+                         selectInput(
+                           "menu_profile",
+                           "Prirotizace nehodových lokalit:",
+                           MENU$profile[MENU$profile %in% OPTIONS$profile],
+                           selected = "default",
+                           width = '100%'
+                         ),
+                         width = 12
+                       )
+                ),
+                column(3,
+                       box(
+                         sliderInput(
+                           "menu_parameterA",
+                           "Parametr pro výpočet:",
+                           min = 0,
+                           max = 100,
+                           value = 50,
+                           width = '100%'
+                         ),
+                         width = 12
+                       )
+                ),
+                column(3,
+                       box(
+                         sliderInput(
+                           "menu_parameterB",
+                           "Parametr pro výpočet:",
+                           min = 0,
+                           max = 100,
+                           value = 50,
+                           width = '100%'
+                         ),
+                         width = 12
+                       )
+                )
+              ),
+      fluidRow(
+        column(6,
+               box(
+               radioGroupButtons(
+                 "menu_hotspot",
+                 "Výbě hotspotu",
+                 choices = 1:10,
+                 selected = 1,
+                 justified = TRUE
+               ),
+               leafletOutput("mphot", height = 900),
+               width = 12
+               )
+               )
+        )
       ),
       ##### UI: Accidents #####
       tabItem(tabName = "accidents",
@@ -397,12 +443,11 @@ server <- function(input, output, session) {
   
   output$header_period <- renderText({
     # Duration of p1 in days
-    p2_length <- dplyr::first(OPTIONS$period_end[OPTIONS$period_menu == input$menu_period])
-    p2_length <- p2_length - dplyr::first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period])
+    p2_length <- input$menu_period[2] - input$menu_period[1]
     p2_length <- as.double(p2_length)
     
     # End date of comparison period (p2)
-    p2_end <- dplyr::first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period])
+    p2_end <- input$menu_period[1]
     p2_end <- p2_end - 1
     
     # Start date of comparison period (p2)
@@ -415,7 +460,9 @@ server <- function(input, output, session) {
     )
     
     stringr::str_c("Základní období: ",
-                   input$menu_period,
+                   strftime(input$menu_period[1], format = "%d.%m.%Y"),
+                   " - ",
+                   strftime(input$menu_period[2], format = "%d.%m.%Y"),
                    "; Srovnávací období: ",
                    p2_string
     )
@@ -517,10 +564,10 @@ server <- function(input, output, session) {
       district = input$menu_district
     ) |>
       dplyr::filter(
-        accident_date >= dplyr::first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period])
+        accident_date >= input$menu_period[1]
       ) |>
       dplyr::filter(
-        accident_date <= dplyr::first(OPTIONS$period_end[OPTIONS$period_menu == input$menu_period])
+        accident_date <= input$menu_period[2]
       ) 
     
     if(input$menu_filteraccidents == "all"){
@@ -550,12 +597,11 @@ server <- function(input, output, session) {
   get_accidents_p2 <- reactive({
     
     # Duration of p1 in days
-    p2_length <- dplyr::first(OPTIONS$period_end[OPTIONS$period_menu == input$menu_period])
-    p2_length <- p2_length - dplyr::first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period])
+    p2_length <- input$menu_period[2] - input$menu_period[1]
     p2_length <- as.double(p2_length)
     
     # End date of comparison period (p2)
-    p2_end <- dplyr::first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period])
+    p2_end <- input$menu_period[1]
     p2_end <- p2_end - 1
     
     # Start date of comparison period (p2)
@@ -1133,6 +1179,108 @@ server <- function(input, output, session) {
   
   ##### Hotspots #####
   
+  ###### Read hotspots #####
+  get_hotspots <- reactive({
+    
+    return(read_hotspots(
+      district = input$menu_district,
+      profile = input$menu_profile,
+      period_start = first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period_hotspots]),
+      period_end = first(OPTIONS$period_end[OPTIONS$period_menu == input$menu_period_hotspots])
+    ))
+    
+  })
+  
+  ###### Figures ######
+  
+  output$fig_clusters <- renderPlot({
+    data_hotspots <- get_hotspots()
+    
+    data_hotspots$cluster_statistics |>
+      ggplot(
+        aes(x = factor(cluster), y = cost)
+      ) +
+      geom_col()
+      theme_classic(
+        base_size = 16
+      ) +
+      theme(
+        legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.title.y = element_blank()
+      )
+  })
+  
+  ###### Maps ######
+  
+  output$mphot <- renderLeaflet({
+    
+    data_hotspots <- get_hotspots()
+    
+    hotspots_accidents <- get_accidents() |>
+      dplyr::filter(
+        accident_id %in% data_hotspots$accidents$accident_id
+      )
+    
+    hotspots <- data_hotspots$cluster_statistics |>
+      dplyr::select(
+        cluster
+      )
+    
+    hotspots_point <- 
+      data_hotspots$cluster_statistics |>
+      st_centroid() |>
+      dplyr::select(
+        cluster
+      )
+    
+    leaflet(data = get_map_district()) |>
+      addProviderTiles(providers$CartoDB.Positron, group = "Positron") |>
+      addTiles(group = "OSM (default)") |>
+      addProviderTiles('Esri.WorldImagery', group = "Satelite") |>
+      addPolygons(
+        fill = FALSE
+      ) |> 
+      # addPolylines(
+      #   data = densities,
+      #   group = "Hustoty",
+      #   color = "#41b6c4"
+      # ) |>
+      addPolylines(
+        data = sf::st_geometry(hotspots),
+        group = "Hustoty",
+        color = "red"
+      ) |>
+      addCircleMarkers(
+        data = st_jitter(
+          hotspots_accidents, factor = 0.0002
+        ),
+        radius = 5,
+        color = "black",
+        weight = 1,
+        fillOpacity = 0.5
+      ) |>
+      addLabelOnlyMarkers(
+        data = hotspots_point,
+        #lng = ~X,
+        #lat = ~Y,
+        label = ~as.character(cluster),
+        labelOptions = labelOptions(noHide = T, direction = 'top', textOnly = T, textsize = "20px")
+      ) |>
+      addLayersControl(
+        baseGroups = c("Positron", "OSM (default)", "Satelite"),
+        options = layersControlOptions(collapsed = TRUE),
+        position = "bottomright"
+      ) |>
+      addMeasure(
+        position = "bottomleft",
+        primaryLengthUnit = "meters",
+        secondaryLengthUnit = "kilometers"
+      )
+    
+  })
+  
+  
   
   ##### Accidents #####
   
@@ -1594,6 +1742,36 @@ server <- function(input, output, session) {
     session$sendCustomMessage("map_selection", "none")
     updateActionButton(session, "removefilter", label = "Filtr není aktivní")
   })
+  
+  #### Reports ####
+  
+  output$report_overview <- downloadHandler(
+    # For PDF output, change this to "report.pdf"
+    filename = "report.html",
+    content = function(file) {
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+      tempReport <- file.path(tempdir(), "report_overview.Rmd")
+      file.copy("report_overview.Rmd", tempReport, overwrite = TRUE)
+      
+      # Set up parameters to pass to Rmd document
+      params <- list(
+        district = names(MENU$district)[MENU$district == input$menu_district],
+        data_accidents_p1 = get_accidents_p1(),
+        data_accidents_p2 = get_accidents_p2(),
+        period = input$menu_period
+      )
+      
+      # Knit the document, passing in the `params` list, and eval it in a
+      # child of the global environment (this isolates the code in the document
+      # from the code in this app).
+      rmarkdown::render(tempReport, output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv())
+      )
+    }
+  )
   
 }
 
