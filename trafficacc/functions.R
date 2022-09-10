@@ -1,0 +1,606 @@
+#### Libraries ####
+library(dtplyr, quietly = TRUE)
+library(tibble, quietly = TRUE)
+library(dplyr, quietly = TRUE)
+library(tidyr, quietly = TRUE)
+library(lubridate, quietly = TRUE)
+library(purrr, quietly = TRUE)
+library(stringr, quietly = TRUE)
+library(sf, quietly = TRUE)
+library(fs, quietly = TRUE)
+
+library(shiny, quietly = TRUE)
+library(shinydashboard, quietly = TRUE)
+library(shinyWidgets, quietly = TRUE)
+library(RColorBrewer, quietly = TRUE)
+library(leaflet, quietly = TRUE)
+library(leaflet.extras, quietly = TRUE)
+
+library(ggplot2, quietly = TRUE)
+library(ggvis, quietly = TRUE)
+
+#### Constants/settings #####
+
+# Path to a directory with data files
+DATA_REPOSITORY <- "poldata/"
+
+
+#### Functions #####
+# New
+
+#
+# Functionality: 
+# Searches data repository and returns all available pre-calculated combinations of 
+# districts, profiles, and periods
+#
+# Inputs: ---
+# Output: Tibble with columns district, profile, period_start, period_end
+#
+
+list_options <- function(){
+  fs::dir_ls(
+    DATA_REPOSITORY
+  ) |>
+    stringr::str_subset(
+      stringr::str_c(DATA_REPOSITORY,"shiny")
+    ) |>
+    stringr::str_remove_all(
+      DATA_REPOSITORY
+    ) |>
+    stringr::str_remove_all(".rds") |>
+    stringr::str_remove_all("shiny_") |>
+    tibble::tibble(
+      file = _
+    ) |>
+    tidyr::separate(
+      file, 
+      c("district","profile","period_start","period_end"),
+      sep = "_"
+    ) %>% 
+    dplyr::mutate(
+      period_start = lubridate::as_date(period_start),
+      period_end = lubridate::as_date(period_end),
+      period_menu = stringr::str_c(
+        base::strftime(period_start, "%d.%m.%Y"),
+        " - ",
+        base::strftime(period_end, "%d.%m.%Y")
+      )
+    )
+}
+
+#
+# Functionality: Reads pre-calculated data from an rds file stored in data repository.
+#
+# Inputs: 
+# district...district ID,
+# profile...profile name,
+# period_start...date in "%Y-%m-%d" format
+# period_end...date in "%Y-%m-%d" format
+#
+# Output: rds file content
+#
+# Note: The function is design to work with parameters delivered by list_options()
+# 
+
+read_shinyapp <- function(district = NULL, profile = "default", period_start = NULL, period_end = NULL){
+  rdsfile <- stringr::str_c(
+    DATA_REPOSITORY,
+    "shiny_",
+    district,"_",
+    profile,"_",
+    as.character(period_start),"_",
+    as.character(period_end),
+    ".rds"
+  )
+  
+  readRDS(rdsfile)
+}
+
+#
+# Functionality: Reads data on accidents from an rds file stored in data repository.
+#
+# Inputs: 
+# district...district ID,
+#
+# Output: rds file content (tibble)
+#
+# Note: The function is design to work with parameters delivered by list_options()
+# 
+
+read_accidents <- function(district = NULL){
+  rdsfile <- stringr::str_c(
+    DATA_REPOSITORY,
+    "accidents_",
+    district,
+    ".rds"
+  )
+  
+  readRDS(rdsfile)
+}
+
+#
+# Functionality: Returns code for arrow symbol 
+#
+# Input: number
+# Output: Arrow oriented by the number (positive, zero, negative)
+#
+
+get_arrow <- function(x){
+  if(x > 0){
+    return("arrow-up")
+  }else if(x == 0){
+    return("arrow-right")
+  }else{
+    return("arrow-down")
+  }
+}
+
+get_delta <- function(p1,p2){
+  
+  ch <- ifelse((p1-p2)>0, str_c("+",p1-p2), p1-p2)
+  chp <- (100*(p1-p2)/p2) |> 
+    round(digits = 1) |>
+    format(nsmall = 1, trim = TRUE, big.mark = " ") |> 
+    stringr::str_c(" %")
+  chp <- ifelse((p1-p2)>0, str_c("+",chp), chp)
+  
+  nch <- p1-p2 
+  nch <- nch |> 
+    format(nsmall = 1, trim = TRUE, big.mark = " ")
+  
+  if(p1 != p2){
+    nch <- ifelse(p1-p2, str_c("",nch), str_c("+",nch))
+  }
+  
+  str_c(nch," (",chp,")")
+}
+
+# Old (to be removed)
+
+select_data_accidents <- function(tabs,periodfilter,periodfilterrange,man_period,
+                                  man_filter, area_admin, p1 = TRUE,
+                                  d_accidents, d_cars, d_pedestrians,
+                                  d_hotspots_accidents,
+                                  d_hs,
+                                  hotspotid=NULL){
+  
+  
+  if(tabs == "accidents" & periodfilter){
+    man_period_y1 <- min(periodfilterrange) %>% as.Date()
+    man_period_y2 <- max(periodfilterrange) %>% as.Date()
+  }else{
+    
+    if(man_period == "man_period_state"){
+      man_period_y1 <- as.character(year(Sys.Date())-4) %>% str_c(.,"-1-1") %>% as.Date()  #-1
+      man_period_y2 <- as.character(year(Sys.Date())-2) %>% str_c(.,"-12-31") %>% as.Date()   #-1
+      
+      if(!p1){
+        man_period_y1 <- as.character(year(Sys.Date())-7) %>% str_c(.,"-1-1") %>% as.Date() 
+        man_period_y2 <- as.character(year(Sys.Date())-5) %>% str_c(.,"-12-31") %>% as.Date()  
+      }
+      
+    }else{
+      man_period_y1 <- Sys.Date() - months(6) - years(2)
+      man_period_y2 <- Sys.Date()  - years(2)
+      
+      if(!p1){
+        man_period_y1 <- Sys.Date() - months(18) - years(2)
+        man_period_y2 <- Sys.Date() - months(12) - years(2)
+      }
+    }
+  }
+  
+  # Všechny nehody
+  if(man_filter == "man_filter_all"){
+    keep <- d_accidents %>% pull(p1)
+  }
+  
+  # nehody s motorkou
+  if(man_filter == "man_filter_bike"){
+    keep <- d_cars %>% filter(p44 %in% c("0","1","2")) %>% pull(p1)
+  }
+  
+  # Nehody s jízdním kolem
+  if(man_filter == "man_filter_bike"){
+    keep <- d_cars %>% filter(p44=="13") %>% pull(p1)
+  }
+  
+  # Nehody s chodcem
+  if(man_filter == "man_filter_pedestrian"){
+    keep <- d_pedestrians %>% pull(p1)
+  }
+  
+  # Ridic pod vlivem alkoholu
+  if(man_filter == "man_filter_alc"){
+    keep <- d_cars %>% filter(p57 %in% c("4","5")) %>% pull(p1)
+  }
+  
+  out <- d_accidents %>% 
+    filter(KOD_OKRES == area_admin) %>% 
+    filter(date >= man_period_y1) %>% 
+    filter(date <= man_period_y2) %>% 
+    filter(p1 %in% keep)
+  
+  if(!is.null(hotspotid)){
+    hacc <- d_hotspots_accidents %>%
+      left_join(d_hs, by = "hotspot") %>%
+      filter(hsn == hotspotid) %>%
+      pull(p1)
+    
+    out %>% 
+      filter(p1 %in% hacc) %>% 
+      return()
+  }else{
+    return(out)
+  }
+  
+}
+
+#### Define variables ####
+
+MENU <- list(
+  district = c(
+    "Benešov" = "CZ0201",
+    "Beroun" = "CZ0202",
+    "Blansko" = "CZ0641",
+    "Brno-město" = "CZ0642",
+    "Brno-venkov" = "CZ0643",
+    "Bruntál" = "CZ0801",
+    "Břeclav" = "CZ0644",
+    "Česká Lípa" = "CZ0511",
+    "České Budějovice" = "CZ0311",
+    "Český Krumlov" = "CZ0312",
+    "Děčín" = "CZ0421",
+    "Domažlice" = "CZ0321",
+    "Frýdek-Místek" = "CZ0802",
+    "Havlíčkův Brod" = "CZ0631",
+    "Hodonín" = "CZ0645",
+    "Hradec Králové" = "CZ0521",
+    "Cheb" = "CZ0411",
+    "Chomutov" = "CZ0422",
+    "Chrudim" = "CZ0531",
+    "Jablonec nad Nisou" = "CZ0512",
+    "Jeseník" = "CZ0711",
+    "Jičín" = "CZ0522",
+    "Jihlava" = "CZ0632",
+    "Jindřichův Hradec" = "CZ0313",
+    "Karlovy Vary" = "CZ0412",
+    "Karviná" = "CZ0803",
+    "Kladno" = "CZ0203",
+    "Klatovy" = "CZ0322",
+    "Kolín" = "CZ0204",
+    "Kroměříž" = "CZ0721",
+    "Kutná Hora" = "CZ0205",
+    "Liberec" = "CZ0513",
+    "Litoměřice" = "CZ0423",
+    "Louny" = "CZ0424",
+    "Mělník" = "CZ0206",
+    "Mladá Boleslav" = "CZ0207",
+    "Most" = "CZ0425",
+    "Náchod" = "CZ0523",
+    "Nový Jičín" = "CZ0804",
+    "Nymburk" = "CZ0208",
+    "Olomouc" = "CZ0712",
+    "Opava" = "CZ0805",
+    "Ostrava-město" = "CZ0806",
+    "Pardubice" = "CZ0532",
+    "Pelhřimov" = "CZ0633",
+    "Písek" = "CZ0314",
+    "Plzeň-jih" = "CZ0324",
+    "Plzeň-město" = "CZ0323",
+    "Plzeň-sever" = "CZ0325",
+    "Praha" = "CZ0100",
+    "Praha-východ" = "CZ0209",
+    "Praha-západ" = "CZ020A",
+    "Prachatice" = "CZ0315",
+    "Prostějov" = "CZ0713",
+    "Přerov" = "CZ0714",
+    "Příbram" = "CZ020B",
+    "Rakovník" = "CZ020C",
+    "Rokycany" = "CZ0326",
+    "Rychnov nad Kněžnou" = "CZ0524",
+    "Semily" = "CZ0514",
+    "Sokolov" = "CZ0413",
+    "Strakonice" = "CZ0316",
+    "Svitavy" = "CZ0533",
+    "Šumperk" = "CZ0715",
+    "Tábor" = "CZ0317",
+    "Tachov" = "CZ0327",
+    "Teplice" = "CZ0426",
+    "Trutnov" = "CZ0525",
+    "Třebíč" = "CZ0634",
+    "Uherské Hradiště" = "CZ0722",
+    "Ústí nad Labem" = "CZ0427",
+    "Ústí nad Orlicí" = "CZ0534",
+    "Vsetín" = "CZ0723",
+    "Vyškov" = "CZ0646",
+    "Zlín" = "CZ0724",
+    "Znojmo" = "CZ0647",
+    "Žďár nad Sázavou" = "CZ0635"
+  ),
+  profile = c(
+    "Počet nehod" = "default",
+    "Výše škod" = "other"
+  ),
+  filteraccidents = c("Všechny"="all",
+    "S účastí chodce"="pedestrian",
+    "S účastí cyklisty"="bike",
+    "S účastí motocyklisty"="motobike",
+    "Pod vlivem alkoholu"="alcohol"
+  )
+)
+
+casualties <- c(
+  "casualties_pedestrian" = "chodec",
+  "casualties_car_driver" = "řidič osobního\nvozidla",
+  "casualties_car_crew" = "spolujezdec v\nosobním vozidle",
+  "casualties_bike_driver" = "cyklista",
+  "casualties_truck_driver" = "řidič nákladního\nvozidla",
+  "casualties_truck_crew" = "spolujezdec v\nnákladním vozidle",
+  "casualties_motobike_driver" = "motocyklista",
+  "casualties_motobike_crew" = "spolujezdec\nna motocyklu",
+  "casualties_other_driver" = "řidič jiného\ndopravního prostředku",
+  "casualties_other_crew" = "spolujezdec na jiném\ndopravním prostředku"
+)
+
+casualties_nolinebreaks <- c(
+  "casualties_pedestrian" = "chodec",
+  "casualties_car_driver" = "řidič osobního vozidla",
+  "casualties_car_crew" = "spolujezdec v osobním vozidle",
+  "casualties_bike_driver" = "cyklista",
+  "casualties_truck_driver" = "řidič nákladního vozidla",
+  "casualties_truck_crew" = "spolujezdec v nákladním vozidle",
+  "casualties_motobike_driver" = "motocyklista",
+  "casualties_motobike_crew" = "spolujezdec na motocyklu",
+  "casualties_other_driver" = "řidič jiného dopravního prostředku",
+  "casualties_other_crew" = "spolujezdec na jiném dopravním prostředku"
+)
+
+faults <- c(
+  "1"="řidičem motorového\nvozidla",
+  "2"="řidičem nemotorového\nvozidla",
+  "3"="chodcem",
+  "4"="lesní a domácí zvěří",
+  "5"="jiným účastníkem\nsilničního provozu",
+  "6"="závadou komunikace",
+  "7"="technickou závadou\nvozidla",
+  "0"="jiné zavinení"
+)
+
+faults_nolinebreaks <- c(
+  "1"="řidičem motorového vozidla",
+  "2"="řidičem nemotorového vozidla",
+  "3"="chodcem",
+  "4"="lesní a domácí zvěří",
+  "5"="jiným účastníkem silničního provozu",
+  "6"="závadou komunikace",
+  "7"="technickou závadou vozidla",
+  "0"="jiné zavinení"
+)
+
+causes <- c(
+"100" = "nezaviněná řidičem",
+"201" = "nepřizpůsobení rychlosti\nhustotě provozu",
+"202" = "nepřizpůsobení rychlosti\nviditelnosti",
+"203" = "nepřizpůsobení rychlosti\nvlastn. vozidla a nákladu",
+"204" = "nepřizpůsobení rychlosti\nstavu vozovky",
+"205" = "nepřizpůsobení rychlosti\ndopr.techn.stavu vozovky",
+"206" = "překročení předepsané rychlosti\nstanovené pravidly",
+"207" = "překročení rychlosti stanovené\ndopravní značkou",
+"208" = "nepřizpůsobení rychlosti\nbočnímu, nárazovému větru",
+"209" = "jiný druh nepřiměřené\nrychlosti",
+"301" = "předjíždění vpravo",
+"302" = "předjíždění bez dostatečného\nbočního odstupu",
+"303" = "předjíždění bez dostatečného\nrozhledu",
+"304" = "při předj. došlo k ohrož.\nprotijedoucího řidiče v.",
+"305" = "při předj. došlo k ohrož.\npředjížděného řidiče v.",
+"306" = "předjíždění vlevo vozidla\nodbočujícího vlevo",
+"307" = "předj. v místech, kde je\nto zakazáno dopr.značkou",
+"308" = "při předj. byla přejeta\npodélná čára souvislá",
+"309" = "bránění v předjíždění",
+"310" = "přehlédnutí již předjíždějícího\nsouběžně jed. voz.",
+"311" = "jiný druh nesprávného\npředjíždění",
+"401" = "jízda na červené světlo",
+"402" = "nedání předn. proti příkazu\nd.z. STŮJ DEJ PŘEDNOST",
+"403" = "nedání předn. proti příkazu\nd.z. DEJ PŘEDNOST",
+"404" = "nedání předn. vozidlu\npřijíždějícímu zprava",
+"405" = "nedání předn. při\nodbočování vlevo",
+"406" = "nedání předn. tramvaji,\nkterá odbočuje",
+"407" = "nedání předn. protijed.voz.\npři objíždění překážky",
+"408" = "nedání předn. při zařazování\ndo proudu jedouc.voz.",
+"409" = "nedání předn. při\nvjížděnína silnici",
+"410" = "nedání předn. při\notáčení nebo couvání",
+"411" = "nedání předn. při\npřejíždění z pruhu do pruhu",
+"412" = "nedání předn. chodci\nna vyznačeném přechodu",
+"413" = "nedání předn. při\nodboč.vlevo souběžně jedouc.voz.",
+"414" = "jiné nedání přednosti",
+"501" = "jízda po nespr.straně\nvozovky, vjetí do protisměru",
+"502" = "vyhýbání bez dostatečné\nboční vůle",
+"503" = "nedodržení bezpečné\nvzdálenosti za vozidlem",
+"504" = "nesprávné otáčení\nnebo couvání",
+"505" = "chyby při udání\nsměru jízdy",
+"506" = "bezohledná, agresivní,\nneohleduplná jízda",
+"507" = "náhlé bezdůvodné snížení\nrychlosti jízdy,zastavení",
+"508" = "řidič se plně nevěnoval\nřízení vozidla",
+"509" = "samovolné rozjetí\nnezajištěného vozidla",
+"510" = "vjetí na nezpevněnou\nkrajnici",
+"511" = "nezvládnutí řízení\nvozidla",
+"512" = "jízda (vjetí) jednosměrnou\nulicí, silnicí",
+"516" = "jiný druh nesprávného\nzpůsobu jízdy",
+"601" = "závada řízení",
+"602" = "závada provozní brzdy",
+"603" = "neúčinná nebo nefungující\nparkovací brzda",
+"604" = "optřebení běhounu pláště\npod stanovenou mez",
+"605" = "defekt pneumatiky - průrazem,\nnáhlým únikem vzd.",
+"606" = "závada osvětlovací soustavy\nvozidla",
+"607" = "nepřipoj./poškoz. spoj.\nhadice pro brzd.přípoj.voz.",
+"608" = "nesprávné uložení nákladu",
+"609" = "upadnutí, ztráta kola\nvozidla (i rezervního)",
+"610" = "zablokování kol v důsledku\nmech. závady vozidla",
+"611" = "lom závěsu kola, pružiny",
+"612" = "nazajištěná, poškozená\nbočnice (i u přívěsu)",
+"613" = "závada závěsu pro přívěs",
+"614" = "utržená spojovací hřídel",
+"615" = "jiná technická závada"
+)
+
+causes_nolinebreaks <- c(
+  "100" = "nezaviněná řidičem",
+  "201" = "nepřizpůsobení rychlosti hustotě provozu",
+  "202" = "nepřizpůsobení rychlosti viditelnosti",
+  "203" = "nepřizpůsobení rychlosti vlastn. vozidla a nákladu",
+  "204" = "nepřizpůsobení rychlosti stavu vozovky",
+  "205" = "nepřizpůsobení rychlosti dopr.techn.stavu vozovky",
+  "206" = "překročení předepsané rychlosti stanovené pravidly",
+  "207" = "překročení rychlosti stanovené dopravní značkou",
+  "208" = "nepřizpůsobení rychlosti bočnímu, nárazovému větru",
+  "209" = "jiný druh nepřiměřené rychlosti",
+  "301" = "předjíždění vpravo",
+  "302" = "předjíždění bez dostatečného bočního odstupu",
+  "303" = "předjíždění bez dostatečného rozhledu",
+  "304" = "při předj. došlo k ohrož. protijedoucího řidiče v.",
+  "305" = "při předj. došlo k ohrož. předjížděného řidiče v.",
+  "306" = "předjíždění vlevo vozidla odbočujícího vlevo",
+  "307" = "předj. v místech, kde je to zakazáno dopr.značkou",
+  "308" = "při předj. byla přejeta podélná čára souvislá",
+  "309" = "bránění v předjíždění",
+  "310" = "přehlédnutí již předjíždějícího souběžně jed. voz.",
+  "311" = "jiný druh nesprávného předjíždění",
+  "401" = "jízda na červené světlo",
+  "402" = "nedání předn. proti příkazu d.z. STŮJ DEJ PŘEDNOST",
+  "403" = "nedání předn. proti příkazu d.z. DEJ PŘEDNOST",
+  "404" = "nedání předn. vozidlu přijíždějícímu zprava",
+  "405" = "nedání předn. při odbočování vlevo",
+  "406" = "nedání předn. tramvaji, která odbočuje",
+  "407" = "nedání předn. protijed.voz. při objíždění překážky",
+  "408" = "nedání předn. při zařazování do proudu jedouc.voz.",
+  "409" = "nedání předn. při vjížděnína silnici",
+  "410" = "nedání předn. při otáčení nebo couvání",
+  "411" = "nedání předn. při přejíždění z pruhu do pruhu",
+  "412" = "nedání předn. chodci na vyznačeném přechodu",
+  "413" = "nedání předn. při odboč.vlevo souběžně jedouc.voz.",
+  "414" = "jiné nedání přednosti",
+  "501" = "jízda po nespr.straně vozovky, vjetí do protisměru",
+  "502" = "vyhýbání bez dostatečné boční vůle",
+  "503" = "nedodržení bezpečné vzdálenosti za vozidlem",
+  "504" = "nesprávné otáčení nebo couvání",
+  "505" = "chyby při udání směru jízdy",
+  "506" = "bezohledná, agresivní, neohleduplná jízda",
+  "507" = "náhlé bezdůvodné snížení rychlosti jízdy,zastavení",
+  "508" = "řidič se plně nevěnoval řízení vozidla",
+  "509" = "samovolné rozjetí nezajištěného vozidla",
+  "510" = "vjetí na nezpevněnou krajnici",
+  "511" = "nezvládnutí řízení vozidla",
+  "512" = "jízda (vjetí) jednosměrnou ulicí, silnicí",
+  "516" = "jiný druh nesprávného způsobu jízdy",
+  "601" = "závada řízení",
+  "602" = "závada provozní brzdy",
+  "603" = "neúčinná nebo nefungující parkovací brzda",
+  "604" = "optřebení běhounu pláště pod stanovenou mez",
+  "605" = "defekt pneumatiky - průrazem, náhlým únikem vzd.",
+  "606" = "závada osvětlovací soustavy vozidla",
+  "607" = "nepřipoj./poškoz. spoj. hadice pro brzd.přípoj.voz.",
+  "608" = "nesprávné uložení nákladu",
+  "609" = "upadnutí, ztráta kola vozidla (i rezervního)",
+  "610" = "zablokování kol v důsledku mech. závady vozidla",
+  "611" = "lom závěsu kola, pružiny",
+  "612" = "nazajištěná, poškozená bočnice (i u přívěsu)",
+  "613" = "závada závěsu pro přívěs",
+  "614" = "utržená spojovací hřídel",
+  "615" = "jiná technická závada"
+)
+
+crashtype <- c(
+  "1" = "srážka s jedoucím\nnekolejovým vozidlem",
+"2" = "srážka s vozidlem\nzaparkovaným, odstav.",
+"3" = "srážka s pevnou\npřekážkou",
+"4" = "srážka s chodcem",
+"5" = "srážka s lesní zvěří",
+"6" = "srážka s domácím\nzvířetem",
+"7" = "srážka s vlakem",
+"8" = "srážka s tramvají",
+"9" = "havárie",
+"0" = "jiný druh nehody"
+)
+
+crashtype_nolinebreaks <- c(
+  "1" = "srážka s jedoucím nekolejovým vozidlem",
+  "2" = "srážka s vozidlem zaparkovaným, odstav.",
+  "3" = "srážka s pevnou překážkou",
+  "4" = "srážka s chodcem",
+  "5" = "srážka s lesní zvěří",
+  "6" = "srážka s domácím zvířetem",
+  "7" = "srážka s vlakem",
+  "8" = "srážka s tramvají",
+  "9" = "havárie",
+  "0" = "jiný druh nehody"
+)
+
+obstacletype <- c(
+  "1" = "strom",
+  "2" = "sloup - telefonní, veř.\nosvětlení, el.vedení apod.",
+  "3" = "odrazník, patník, sloupek\nsměrový, dopr.značky ap.",
+  "4" = "svodidlo",
+  "5" = "překážka vzniklá provozem\njiného vozidla",
+  "6" = "zeď, pevná část mostů,\npodjezdů, tunelů apod.",
+  "7" = "závory železničního\npřejezdu",
+  "8" = "překážka vzniklá\nstavební činností",
+  "9" = "jiná překážka - plot,\nnásep, nástupní ostrůvek",
+  "0" = "nepřichází v úvahu,\nnejde o srážku s pev.přek."
+)
+
+# Old
+man_priority_coices <- c(
+  "Celková škoda" = "man_priority_damage",
+  "Nějaká další možnost" = "man_priority_other" 
+)
+
+choices_p6 <- c(
+  "srážka s jedoucím nekolejovým vozidlem" = "1",
+  "srážka s vozidlem zaparkovaným, odstav." = "2",
+  "srážka s pevnou překážkou" = "3",
+  "srážka s chodcem" = "4",
+  "srážka s lesní zvěří" = "5",
+  "srážka s domácím zvířetem" = "6",
+  "srážka s vlakem" = "7",
+  "srážka s tramvají" = "8",
+  "havárie" = "9",
+  "jiný druh nehody" = "0"
+)
+
+admin_areas <- c(
+  "Benešov"="40169","Beroun"="40177","Blansko"="40703",
+  "Brno-město"="40711","Brno-venkov"="40720","Bruntál"="40860",
+  "Břeclav"="40738","Česká Lípa"="40525","České Budějovice"="40282",
+  "Český Krumlov"="40291","Děčín"="40452","Domažlice"="40355",
+  "Frýdek-Místek"="40878","Havlíčkův Brod"="40657","Hodonín"="40746",
+  "Hradec Králové"="40568","Cheb"="40428","Chomutov"="40461","Chrudim"="40614",
+  "Jablonec nad Nisou"="40533","Jeseník"="40771","Jičín"="40576","Jihlava"="40665",
+  "Jindřichův Hradec"="40304","Karlovy Vary"="40436","Karviná"="40886",
+  "Kladno"="40185","Klatovy"="40363","Kolín"="40193","Kroměříž"="40827",
+  "Kutná Hora"="40207","Liberec"="40541","Litoměřice"="40479","Louny"="40487",
+  "Mělník"="40215","Mladá Boleslav"="40223","Most"="40495","Náchod"="40584",
+  "Nový Jičín"="40894","Nymburk"="40231","Olomouc"="40789","Opava"="40908",
+  "Ostrava-město"="40916","Pardubice"="40622","Pelhřimov"="40673","Písek"="40312",
+  "Plzeň-jih"="40380","Plzeň-město"="40371","Plzeň-sever"="40398","Praha"="40924",
+  "Praha-východ"="40240","Praha-západ"="40258","Prachatice"="40321","Prostějov"="40797",
+  "Přerov"="40801","Příbram"="40266","Rakovník"="40274","Rokycany"="40401",
+  "Rychnov nad Kněžnou"="40592","Semily"="40550","Sokolov"="40444",
+  "Strakonice"="40339","Svitavy"="40631","Šumperk"="40819","Tábor"="40347",
+  "Tachov"="40410","Teplice"="40509","Trutnov"="40606","Třebíč"="40681",
+  "Uherské Hradiště"="40835","Ústí nad Labem"="40517","Ústí nad Orlicí"="40649",
+  "Vsetín"="40843","Vyškov"="40754","Zlín"="40851",
+  "Znojmo"="40762","Žďár nad Sázavou"="40690",
+  "Hlavní město Praha"="3018"#,"Jihočeský kraj"="3034","Jihomoravský kraj"="3115",
+  # "Karlovarský kraj"="3051","Kraj Vysočina"="3107","Královéhradecký kraj"="3085",
+  # "Liberecký kraj"="3077","Moravskoslezský kraj"="3140","Olomoucký kraj"="3123",
+  # "Pardubický kraj"="3093","Plzeňský kraj"="3042","Středočeský kraj"="3026",
+  # "Ústecký kraj"="3069","Zlínský kraj"="3131"
+)
+
+man_filter_choices <- c("Všechny"="man_filter_all",
+                        "S účastí chodce"="man_filter_pedestrian",
+                        "S účastí cyklisty"="man_filter_bike",
+                        "S účastí motocyklisty"="man_filter_motobike",
+                        "Pod vlivem alkoholu"="man_filter_alc"
+)
