@@ -21,7 +21,6 @@ library(sf, quietly = TRUE)
 library(fs, quietly = TRUE)
 library(readr, quietly = TRUE)
 library(ggplot2, quietly = TRUE)
-library(ggvis, quietly = TRUE)
 ```
 
 ```{r, echo=FALSE}
@@ -108,7 +107,7 @@ change_fce <- function(x1,x2){
 
 - Celkový počet nehod: `r format_integer(nrow(params$data_accidents_p1))`, změna `r change_fce(nrow(params$data_accidents_p1),nrow(params$data_accidents_p2))` oproti srovnávacímu období
 - Počet obětí dopravních nehod `r format_integer(died_p1)`, změna `r change_fce(died_p1,died_p2)` oproti srovnávacímu období
-- Počet vážně zraněných v dopravních nehodách `r format_integer(swound_p1)`, změna `r change_fce(swound_p1,swound_p2)` oproti srovnávacímu období
+- Počet těžce zraněných v dopravních nehodách `r format_integer(swound_p1)`, změna `r change_fce(swound_p1,swound_p2)` oproti srovnávacímu období
 - Počet lehce zraněných v dopravních nehodách `r format_integer(lwound_p1)`, změna `r change_fce(lwound_p1,lwound_p2)` oproti srovnávacímu období
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3}

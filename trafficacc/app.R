@@ -55,7 +55,7 @@ ui <- dashboardPage(
       #box(
       img(src='muni-lg-white.png', align = "center", width = "100%"),br(),
       img(src='cuni.png', align = "center", width = "100%"),br(),
-      img(src='Doprava.png', align = "center", width = "100%")
+      img(src='Doprava.png', align = "center", width = "100%"),br()
       #width = 12,
       #solidHeader = TRUE,
       #background = "navy"
@@ -97,12 +97,11 @@ ui <- dashboardPage(
     tabItems(
       tabItem(tabName = "overview",
               fluidRow(
-                column(6,
+                column(5,
                        box(
                          h1(textOutput("header_title")),
                          h4(textOutput("header_period")),
                          h4(textOutput("header_filteraccidents")),
-                         downloadButton("report_overview", "Report"),
                          width = 12
                        )
                 ),
@@ -122,10 +121,11 @@ ui <- dashboardPage(
                            separator = " do ",
                            width = '100%'
                          ),
+                         status = "warning",
                          width = 12
                        )
                 ),
-                column(3,
+                column(2,
                        box(
                          selectInput(
                            "menu_filteraccidents",
@@ -134,6 +134,15 @@ ui <- dashboardPage(
                            selected = "all",
                            width = '100%'
                          ),
+                         status = "warning",
+                         width = 12
+                       )
+                ),
+                column(2,
+                       box(
+                         p("Vygeneruje tisknutelný report v HTML."),
+                         downloadButton("report_overview", "Report"),
+                         status = "warning",
                          width = 12
                        )
                 )
@@ -235,6 +244,17 @@ ui <- dashboardPage(
                          width = 12
                        )
                 )
+              ),
+              fluidRow(
+                column(12,
+                       box(
+                         "Vývoj webové aplikace a software na identifikaci klastrů nehod na silniční síti byl podpořen
+                         grantem TA ČR (CK01000049): ",
+                         em("Tvorba pokročilých nástrojů pro analýzu dopravních nehod pro Policii ČR"),br(),
+                         "Autoři: Michal Kvasnička (michal.kvasnicka@econ.muni.cz) & Štěpán Mikula (stepan.mikula@econ.muni.cz)",
+                         width = 12
+                       )
+                       )
               )
       ),
       ##### UI: Hotspots #####
@@ -249,6 +269,7 @@ ui <- dashboardPage(
                            selected = PERIOD_preselected,
                            width = '100%'
                          ),
+                         status = "warning",
                          width = 12
                        )
                 ),
@@ -261,6 +282,7 @@ ui <- dashboardPage(
                            selected = "default",
                            width = '100%'
                          ),
+                         status = "warning",
                          width = 12
                        )
                 ),
@@ -274,6 +296,7 @@ ui <- dashboardPage(
                            value = 50,
                            width = '100%'
                          ),
+                         status = "warning",
                          width = 12
                        )
                 ),
@@ -287,6 +310,7 @@ ui <- dashboardPage(
                            value = 50,
                            width = '100%'
                          ),
+                         status = "warning",
                          width = 12
                        )
                 )
@@ -305,7 +329,18 @@ ui <- dashboardPage(
                width = 12
                )
                )
+        ),
+      fluidRow(
+        column(12,
+               box(
+                 "Vývoj webové aplikace a software na identifikaci klastrů nehod na silniční síti byl podpořen
+                         grantem TA ČR (CK01000049): ",
+                 em("Tvorba pokročilých nástrojů pro analýzu dopravních nehod pro Policii ČR"),br(),
+                 "Autoři: Michal Kvasnička (michal.kvasnicka@econ.muni.cz) & Štěpán Mikula (stepan.mikula@econ.muni.cz)",
+                 width = 12
+               )
         )
+      )
       ),
       ##### UI: Accidents #####
       tabItem(tabName = "accidents",
@@ -315,7 +350,7 @@ ui <- dashboardPage(
                           });
                           "),
               fluidRow(
-                column(4,
+                column(3,
                        box(
                          dateRangeInput(
                            "menu_period_accidents",
@@ -331,6 +366,7 @@ ui <- dashboardPage(
                            separator = " do ",
                            width = '100%'
                          ),
+                         status = "warning",
                          width = 12
                        )
                 ),
@@ -343,18 +379,28 @@ ui <- dashboardPage(
                            selected = "all",
                            width = '100%'
                          ),
+                         status = "warning",
                          width = 12
                        )
                 ),
-                column(5,
+                column(4,
                        box(
                          p("Výběr polygonu na mapě omezuje výběr dopravních nehod na danou oblast. 
                               Ostatní nastavené filtry zůstavájí v platnosti (AND)."),
                          actionButton("removefilter", "Filtr není aktivní"),
                          #title = "Výběr oblasti",
+                         status = "warning",
                          width = 12
                        )
-                )
+                ),
+                column(2,
+                       box(
+                         p("Generování HTML reportu pro velké množství nehod může trvat dlouhou dobu."),
+                         downloadButton("report_accidents", "Report"),
+                         status = "warning",
+                         width = 12
+                       )
+                       )
               ),
               fluidRow(
                 column(7,
@@ -423,6 +469,17 @@ ui <- dashboardPage(
                        width = 12
                      )
               )
+          ),
+          fluidRow(
+            column(12,
+                   box(
+                     "Vývoj webové aplikace a software na identifikaci klastrů nehod na silniční síti byl podpořen
+                         grantem TA ČR (CK01000049): ",
+                     em("Tvorba pokročilých nástrojů pro analýzu dopravních nehod pro Policii ČR"),br(),
+                     "Autoři: Michal Kvasnička (michal.kvasnicka@econ.muni.cz) & Štěpán Mikula (stepan.mikula@econ.muni.cz)",
+                     width = 12
+                   )
+            )
           ) # Fluid row ends here
       )
     )
@@ -437,7 +494,7 @@ server <- function(input, output, session) {
   ##### Header #####
   
   output$header_title <- renderText({
-    stringr::str_c("Dopravní nehody v okrese ",
+    stringr::str_c("Nehody v okrese ",
                    names(MENU$district)[MENU$district == input$menu_district])
   })
   
@@ -463,7 +520,7 @@ server <- function(input, output, session) {
                    strftime(input$menu_period[1], format = "%d.%m.%Y"),
                    " - ",
                    strftime(input$menu_period[2], format = "%d.%m.%Y"),
-                   "; Srovnávací období: ",
+                   ";\nSrovnávací období: ",
                    p2_string
     )
   })
@@ -1478,9 +1535,9 @@ server <- function(input, output, session) {
         dplyr::select(
           accident_type
         ) |>
-        dplyr::filter(
-          accident_type != 0
-        ) |>
+        # dplyr::filter(
+        #   accident_type != 0
+        # ) |>
         dplyr::group_by(
           accident_type
         ) |>
@@ -1754,7 +1811,7 @@ server <- function(input, output, session) {
       # can happen when deployed).
       tempReport <- file.path(tempdir(), "report_overview.Rmd")
       file.copy("report_overview.Rmd", tempReport, overwrite = TRUE)
-      
+
       # Set up parameters to pass to Rmd document
       params <- list(
         district = names(MENU$district)[MENU$district == input$menu_district],
@@ -1762,6 +1819,33 @@ server <- function(input, output, session) {
         data_accidents_p2 = get_accidents_p2(),
         period = input$menu_period,
         accfilter = input$menu_filteraccidents
+      )
+
+      # Knit the document, passing in the `params` list, and eval it in a
+      # child of the global environment (this isolates the code in the document
+      # from the code in this app).
+      rmarkdown::render(tempReport, output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv())
+      )
+    }
+  )
+  
+  output$report_accidents <- downloadHandler(
+    # For PDF output, change this to "report.pdf"
+    filename = "report_acc.html",
+    content = function(file) {
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+      tempReport <- file.path(tempdir(), "report_accidents.Rmd")
+      file.copy("report_accidents.Rmd", tempReport, overwrite = TRUE)
+      
+      # Set up parameters to pass to Rmd document
+      params <- list(
+        data_accidents = get_accidents_box(),
+        period = input$menu_period_accidents,
+        accfilter = input$menu_filteraccidents_accidents
       )
       
       # Knit the document, passing in the `params` list, and eval it in a
