@@ -1760,7 +1760,8 @@ server <- function(input, output, session) {
         district = names(MENU$district)[MENU$district == input$menu_district],
         data_accidents_p1 = get_accidents_p1(),
         data_accidents_p2 = get_accidents_p2(),
-        period = input$menu_period
+        period = input$menu_period,
+        accfilter = input$menu_filteraccidents
       )
       
       # Knit the document, passing in the `params` list, and eval it in a

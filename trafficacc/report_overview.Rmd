@@ -6,6 +6,7 @@ params:
   data_accidents_p1: NA
   data_accidents_p2: NA
   period: NA
+  accfilter: NA
 ---
 
 ```{r, echo = FALSE}
@@ -46,15 +47,69 @@ period_p2 <- str_c(
   " - ",
   strftime(p2_end, format = "%d.%m.%Y")
 )
+
+died_p1 <- params$data_accidents_p1 |> pull(accident_dead) |> sum(na.rm = TRUE)
+died_p2 <- params$data_accidents_p2 |> pull(accident_dead) |> sum(na.rm = TRUE)
+
+swound_p1 <- params$data_accidents_p1 |> pull(accident_serious_injury) |> sum(na.rm = TRUE)
+swound_p2 <- params$data_accidents_p2 |> pull(accident_serious_injury) |> sum(na.rm = TRUE)
+
+lwound_p1 <- params$data_accidents_p1 |> pull(accident_light_injury) |> sum(na.rm = TRUE)
+lwound_p2 <- params$data_accidents_p2 |> pull(accident_light_injury) |> sum(na.rm = TRUE)
+
+filteraccidents <- c(
+    "Bez omezení (zahrnuty jsou všechny nehody)"="all",
+    "Pouze nehody s účastí chodce"="pedestrian",
+    "Pouze nehody s účastí cyklisty"="bike",
+    "Pouze nehody s účastí motocyklisty"="motobike",
+    "Pouze nehody, které se staly pod vlivem alkoholu"="alcohol"
+  )
+
+accidents <- names(filteraccidents)[filteraccidents == params$accfilter]
+
+
+format_integer <- function(x){
+  x |>
+    as.integer() |>
+    format(
+      nsmall = 0,
+      trim = TRUE,
+      big.mark = " "
+    )
+}
+
+change_fce <- function(x1,x2){
+  gr <- 100*(x1-x2)/x2
+  
+  gr <- gr |> 
+    round(digits = 1) |>
+    format(nsmall = 1, trim = TRUE, big.mark = " ") |> 
+    str_c(" %")
+  
+  if(x1>x2){
+    str_c("+",gr)
+  }else{
+    return(gr)
+  }
+}
 ```
 
 
 
-Okres: `r params$district`
+**Okres:** `r params$district`
 
-Základní období: `r period_p1`
+**Základní období:** `r period_p1`
 
-Srovnávací období: `r period_p2`
+**Srovnávací období:** `r period_p2`
+
+**Výběr nehod:** `r accidents`
+
+**Přehled nehod:**
+
+- Celkový počet nehod: `r format_integer(nrow(params$data_accidents_p1))`, změna `r change_fce(nrow(params$data_accidents_p1),nrow(params$data_accidents_p2))` oproti srovnávacímu období
+- Počet obětí dopravních nehod `r format_integer(died_p1)`, změna `r change_fce(died_p1,died_p2)` oproti srovnávacímu období
+- Počet vážně zraněných v dopravních nehodách `r format_integer(swound_p1)`, změna `r change_fce(swound_p1,swound_p2)` oproti srovnávacímu období
+- Počet lehce zraněných v dopravních nehodách `r format_integer(lwound_p1)`, změna `r change_fce(lwound_p1,lwound_p2)` oproti srovnávacímu období
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3}
 casualties <- c(
