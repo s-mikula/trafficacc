@@ -274,7 +274,8 @@ ui <- dashboardPage(
                 ),
                 column(2,
                        box(
-                         "Tady bude generování reportu",
+                         p("Generování HTML reportu pro velké množství nehod může trvat dlouhou dobu."),
+                         downloadButton("report_cluster", "Report"),
                          status = "warning",
                          width = 12
                        )
@@ -284,6 +285,7 @@ ui <- dashboardPage(
         column(6,
                box(
                leafletOutput("mphot", height = 900),
+               title = "Mapa shluků dopravních nehod",
                width = 12
                )
                ),
@@ -301,6 +303,7 @@ ui <- dashboardPage(
                    height = "250px"
                    ),
                  uiOutput("controlSorting"),
+                 status = "warning",
                  width = 12
                ),
                valueBoxOutput("box_acc_n_hot", width = 3),
@@ -560,6 +563,29 @@ server <- function(input, output, session) {
         return(dplyr::filter(out, !accident_alcohol %in% c(0,1)))
       }
     }
+    
+  })
+  
+  # Returns car accident from user-defined period
+  get_accidents_district <- reactive({
+    
+    out <- read_accidents(
+      district = input$menu_district
+    ) 
+    
+    out <- out |>
+      dplyr::mutate(
+        label = str_c(
+          "<b>ID nehody: </b>", accident_id,"<br>",
+          "<b>Datum nehody: </b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
+          "<b>Počet mrtvých: </b>", accident_dead,"<br>",
+          "<b>Počet těžce zraněných: </b>", accident_serious_injury,"<br>",
+          "<b>Počet lehce zraněných: </b>", accident_light_injury,"<br>",
+          "<b>Škoda na majetku: </b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
+        )
+      )
+    
+    return(out)
     
   })
   
@@ -1326,7 +1352,7 @@ server <- function(input, output, session) {
     cll <- cll$accidents |>
       dplyr::filter(cluster == selected_cluster)
     
-    clusters_accidents <- get_accidents() |>
+    clusters_accidents <- get_accidents_district() |>
       dplyr::filter(accident_id %in% cll$accident_id)
     
     n1 <- nrow(clusters_accidents)
@@ -1351,7 +1377,7 @@ server <- function(input, output, session) {
     cll <- cll$accidents |>
       dplyr::filter(cluster == selected_cluster)
     
-    clusters_accidents <- get_accidents() |>
+    clusters_accidents <- get_accidents_district() |>
       dplyr::filter(accident_id %in% cll$accident_id)
     
     n1 <- clusters_accidents |> 
@@ -1378,7 +1404,7 @@ server <- function(input, output, session) {
     cll <- cll$accidents |>
       dplyr::filter(cluster == selected_cluster)
     
-    clusters_accidents <- get_accidents() |>
+    clusters_accidents <- get_accidents_district() |>
       dplyr::filter(accident_id %in% cll$accident_id)
     
     n1 <- clusters_accidents |> 
@@ -1405,7 +1431,7 @@ server <- function(input, output, session) {
     cll <- cll$accidents |>
       dplyr::filter(cluster == selected_cluster)
     
-    clusters_accidents <- get_accidents() |>
+    clusters_accidents <- get_accidents_district() |>
       dplyr::filter(accident_id %in% cll$accident_id)
     
     n1 <- clusters_accidents |> 
@@ -1466,7 +1492,7 @@ server <- function(input, output, session) {
     cll <- cll$accidents |>
       dplyr::filter(cluster == selected_cluster)
     
-    clusters_accidents <- get_accidents() |>
+    clusters_accidents <- get_accidents_district() |>
       dplyr::filter(accident_id %in% cll$accident_id)
     
       clusters_accidents |>
@@ -1510,7 +1536,7 @@ server <- function(input, output, session) {
     
     data_clusters <- get_clusters()
     
-    clusters_accidents <- get_accidents() |>
+    clusters_accidents <- get_accidents_district() |>
       dplyr::filter(
         accident_id %in% data_clusters$accidents$accident_id
       ) |>
@@ -1618,7 +1644,7 @@ server <- function(input, output, session) {
       cll <- cll$accidents |>
         dplyr::filter(cluster == selected_cluster)
       
-      clusters_accidents <- get_accidents() |>
+      clusters_accidents <- get_accidents_district() |>
         dplyr::filter(accident_id %in% cll$accident_id)
       
       out <- 
@@ -1678,7 +1704,7 @@ server <- function(input, output, session) {
       cll <- cll$accidents |>
         dplyr::filter(cluster == selected_cluster)
       
-      clusters_accidents <- get_accidents() |>
+      clusters_accidents <- get_accidents_district() |>
         dplyr::filter(accident_id %in% cll$accident_id)
       
       out <- clusters_accidents |>
@@ -1730,7 +1756,7 @@ server <- function(input, output, session) {
       cll <- cll$accidents |>
         dplyr::filter(cluster == selected_cluster)
       
-      clusters_accidents <- get_accidents() |>
+      clusters_accidents <- get_accidents_district() |>
         dplyr::filter(accident_id %in% cll$accident_id)
       
       out <- clusters_accidents |>
@@ -1785,7 +1811,7 @@ server <- function(input, output, session) {
       cll <- cll$accidents |>
         dplyr::filter(cluster == selected_cluster)
       
-      clusters_accidents <- get_accidents() |>
+      clusters_accidents <- get_accidents_district() |>
         dplyr::filter(accident_id %in% cll$accident_id)
       
       out <- clusters_accidents |>
@@ -2311,7 +2337,7 @@ server <- function(input, output, session) {
   
   output$report_overview <- downloadHandler(
     # For PDF output, change this to "report.pdf"
-    filename = "report.html",
+    filename = "report_ovr.html",
     content = function(file) {
       # Copy the report file to a temporary directory before processing it, in
       # case we don't have write permissions to the current working dir (which
@@ -2353,6 +2379,34 @@ server <- function(input, output, session) {
         data_accidents = get_accidents_box(),
         period = input$menu_period_accidents,
         accfilter = input$menu_filteraccidents_accidents
+      )
+      
+      # Knit the document, passing in the `params` list, and eval it in a
+      # child of the global environment (this isolates the code in the document
+      # from the code in this app).
+      rmarkdown::render(tempReport, output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv())
+      )
+    }
+  )
+  
+  output$report_cluster <- downloadHandler(
+    # For PDF output, change this to "report.pdf"
+    filename = "report_clu.html",
+    content = function(file) {
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+      tempReport <- file.path(tempdir(), "report_cluster.Rmd")
+      file.copy("report_cluster.Rmd", tempReport, overwrite = TRUE)
+      
+      # Set up parameters to pass to Rmd document
+      params <- list(
+        data_clusters = get_clusters(),
+        all_accidents = get_accidents_district(),
+        cluster_id = input$menu_cluster,
+        period = input$menu_period_hotspots
       )
       
       # Knit the document, passing in the `params` list, and eval it in a
