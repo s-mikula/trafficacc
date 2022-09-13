@@ -31,8 +31,7 @@ ui <- dashboardPage(
       id = "tabs",
       menuItem("Přehled", tabName = "overview", icon = icon("satellite")),
       menuItem("Nehodové lokality", tabName = "hotspots", icon = icon("map-location-dot")),
-      menuItem("Dopravní nehody", tabName = "accidents", icon = icon("car-burst"))#,
-      #menuItem("Administrace aplikace", tabName = "administration", icon = icon("tools"))
+      menuItem("Dopravní nehody", tabName = "accidents", icon = icon("car-burst"))
     ),
     sidebarMenu(
       selectInput(
@@ -42,57 +41,14 @@ ui <- dashboardPage(
         multiple = FALSE,
         width = '100%'
       ),
-      # selectInput(
-      #   "menu_profile",
-      #   "Prirotizace nehodových lokalit:",
-      #   MENU$profile[MENU$profile %in% OPTIONS$profile],
-      #   selected = "default",
-      #   width = '100%'
-      # ),
-      # downloadButton("report", "Stáhnout report"),
-      # br(),
-      #fillPage(),
-      #box(
       img(src='muni-lg-white.png', align = "center", width = "100%"),br(),
       img(src='cuni.png', align = "center", width = "100%"),br(),
       img(src='Doprava.png', align = "center", width = "100%"),br()
-      #width = 12,
-      #solidHeader = TRUE,
-      #background = "navy"
-      #)
     ),
     width = 200,
     collapsed = FALSE
   ),
   dashboardBody(
-    # fluidRow(
-    #   column(7,
-    #          box(
-    #            h1(textOutput("header_title")),
-    #            h4(textOutput("header_period")),
-    #            h4(textOutput("header_filteraccidents")),
-    #            width = 12
-    #          )
-    #   ),
-    #   column(3,
-    #          box(
-    #            selectInput(
-    #              "menu_profile",
-    #              "Prirotizace nehodových lokalit:",
-    #              MENU$profile[MENU$profile %in% OPTIONS$profile],
-    #              selected = "default",
-    #              width = '100%'
-    #            ),
-    #            width = 12
-    #          )
-    #   ),
-    #   column(2,
-    #          box(
-    #            downloadButton("generate_report", "PDF")
-    #            ),
-    #            width = 12
-    #          )
-    # ),
     ##### UI: Overview #####
     tabItems(
       tabItem(tabName = "overview",
@@ -110,8 +66,6 @@ ui <- dashboardPage(
                          dateRangeInput(
                            "menu_period",
                            "Období (od/do):",
-                           #unique(OPTIONS$period_menu),
-                           #selected = PERIOD_preselected,
                            start = max(OPTIONS$period_start),
                            end = max(OPTIONS$period_end),
                            min = "2011-01-01",
@@ -286,49 +240,99 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(3,
+                column(2,
                        box(
                          sliderInput(
-                           "menu_parameterA",
-                           "Parametr pro výpočet:",
-                           min = 0,
-                           max = 100,
-                           value = 50,
+                           "menu_quantile",
+                           "Promile nejhorších úseků:",
+                           min = 1,
+                           max = 25,
+                           step = 2,
+                           value = 13,
+                           ticks = TRUE,
                            width = '100%'
                          ),
                          status = "warning",
                          width = 12
                        )
                 ),
-                column(3,
+                column(2,
                        box(
                          sliderInput(
-                           "menu_parameterB",
-                           "Parametr pro výpočet:",
-                           min = 0,
-                           max = 100,
-                           value = 50,
+                           "menu_spill",
+                           "Dodatečný rozliv klastrů:",
+                           min = 1,
+                           max = 10,
+                           value = 5,
+                           step = 1,
+                           ticks = TRUE,
                            width = '100%'
                          ),
                          status = "warning",
                          width = 12
                        )
-                )
+                ),
+                column(2,
+                       box(
+                         "Tady bude generování reportu",
+                         status = "warning",
+                         width = 12
+                       )
+                       )
               ),
       fluidRow(
         column(6,
                box(
-               radioGroupButtons(
-                 "menu_hotspot",
-                 "Výbě hotspotu",
-                 choices = 1:10,
-                 selected = 1,
-                 justified = TRUE
-               ),
                leafletOutput("mphot", height = 900),
                width = 12
                )
+               ),
+        column(6,
+               box(
+                 selectInput(
+                   "menu_sorting",
+                   "Řazení klastrů",
+                   choices = MENU$sorting,
+                   selected = "costs",
+                   width = '100%'
+                 ),
+                 plotOutput(
+                   "fig_clusters",
+                   height = "250px"
+                   ),
+                 uiOutput("controlSorting"),
+                 width = 12
+               ),
+               valueBoxOutput("box_acc_n_hot", width = 3),
+               valueBoxOutput("box_death_n_hot", width = 3),
+               valueBoxOutput("box_swound_n_hot", width = 3),
+               valueBoxOutput("box_lwound_n_hot", width = 3),
+               box(
+                 tableOutput("tab_casualties_hot"), 
+                 title = "Oběti dopravních nehod",
+                 width = 6
+               ),
+               box(
+                 tableOutput("tab_fault_hot"), #tab_causes_accidents
+                 title = "Nehody podle zavinění",
+                 width = 6
+               ),
+               box(
+                 tableOutput("tab_causes_hot"), #tab_type_accidents
+                 title = "Nehody podle příčin",
+                 width = 6
+               ),
+               box(
+                 tableOutput("tab_type_hot"), #tab_type_accidents
+                 title = "Nehody podle příčin",
+                 width = 6
+               ),
+               box(
+                 plotOutput("fig_age_hot"),
+                 title = "Počet nehod podle věku řidiče",
+                 width = 12
                )
+        )
         ),
       fluidRow(
         column(12,
@@ -355,8 +359,6 @@ ui <- dashboardPage(
                          dateRangeInput(
                            "menu_period_accidents",
                            "Období (od/do):",
-                           #unique(OPTIONS$period_menu),
-                           #selected = PERIOD_preselected,
                            start = max(OPTIONS$period_start),
                            end = max(OPTIONS$period_end),
                            min = "2011-01-01",
@@ -420,25 +422,6 @@ ui <- dashboardPage(
                             )
                         ),
               column(5,
-                      # box(
-                      #      p("Výběr polygonu na mapě omezuje výběr dopravních nehod na danou oblast. 
-                      #         Ostatní nastavené filtry zůstavájí v platnosti (AND)."),
-                      #      actionButton("removefilter", "Filtr není aktivní"),
-                      #      title = "Výběr oblasti",
-                      #      width = 12
-                      #   ),
-                      # box(
-                      #     p("Filtr umožňuje detailní nastavení období. Pokud není nastaven, potom
-                      #       se použijí všechny nehody z nastaveného období. Tento filtr platí pouze
-                      #       pro analýzu jednotlivých dopravních nehod."),
-                      #     materialSwitch(
-                      #       "periodfilter",
-                      #       "Zapnout detailní filtrování období"
-                      #       ),
-                      #     uiOutput("periodfilterinput"),
-                      #     title = "Výběr časového období (nepovinný)",
-                      #     width = 7
-                      #   ),
                         valueBoxOutput("box_acc_n_box", width = 3),
                         valueBoxOutput("box_death_n_box", width = 3),
                         valueBoxOutput("box_swound_n_box", width = 3),
@@ -544,6 +527,18 @@ server <- function(input, output, session) {
       dplyr::filter(
         accident_date <= input$menu_period_accidents[2]
       ) 
+    
+    out <- out |>
+      dplyr::mutate(
+        label = str_c(
+          "<b>ID nehody: </b>", accident_id,"<br>",
+          "<b>Datum nehody: </b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
+          "<b>Počet mrtvých: </b>", accident_dead,"<br>",
+          "<b>Počet těžce zraněných: </b>", accident_serious_injury,"<br>",
+          "<b>Počet lehce zraněných: </b>", accident_light_injury,"<br>",
+          "<b>Škoda na majetku: </b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
+        )
+      )
     
     if(input$menu_filteraccidents_accidents == "all"){
       return(out)
@@ -1236,28 +1231,269 @@ server <- function(input, output, session) {
   
   ##### Hotspots #####
   
-  ###### Read hotspots #####
-  get_hotspots <- reactive({
+  ###### Read clusters #####
+  get_clusters <- reactive({
     
-    return(read_hotspots(
+    out <- read_clusters(
       district = input$menu_district,
       profile = input$menu_profile,
       period_start = first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period_hotspots]),
       period_end = first(OPTIONS$period_end[OPTIONS$period_menu == input$menu_period_hotspots])
-    ))
+    )
     
+    out <- out |>
+      dplyr::filter(quantile == 1-(input$menu_quantile/1000)) |>
+      dplyr::filter(additional_clusters == input$menu_spill)
+    
+    clusters <- list()
+    clusters$accidents <- out$accidents[[1]]
+    clusters$clusters <- out$clusters[[1]]
+    
+    if(input$menu_sorting == "cost"){
+      sorting_rule <- 
+        clusters$clusters |>
+        sf::st_drop_geometry() |>
+        dplyr::arrange(desc(cost)) |>
+        dplyr::mutate(
+          cluster_sorted = row_number()
+        ) |>
+        dplyr::select(
+          cluster, cluster_sorted, ordervalue = cost
+        )
+    }else{
+      sorting_rule <- 
+        clusters$clusters |>
+        sf::st_drop_geometry() |>
+        dplyr::arrange(desc(cost_per_meter)) |>
+        dplyr::mutate(
+          cluster_sorted = row_number()
+        ) |>
+        dplyr::select(
+          cluster, cluster_sorted, ordervalue = cost_per_meter
+        )
+    }
+    
+    clusters$clusters <- 
+      dplyr::left_join(clusters$clusters,sorting_rule, by = "cluster") |>
+      dplyr::select(-cluster) |>
+      dplyr::rename(cluster = cluster_sorted)
+    
+    clusters$accidents <- 
+      dplyr::left_join(clusters$accidents,sorting_rule, by = "cluster") |>
+      dplyr::select(-cluster) |>
+      dplyr::rename(cluster = cluster_sorted)
+    
+    # Total number of clusters
+    clusters$N <- nrow(clusters$clusters)
+    
+    return(clusters)
+  })
+  
+  ###### UI ######
+  
+  output$controlSorting <- renderUI({
+    
+    maxN <- get_clusters()
+    
+    tagList(
+      # selectInput("menu_cluster", 
+      #             "Výběr klastru dopravních nehod", 
+      #             choices = 1:maxN$N, 
+      #             selected = 1,
+      #             width = '100%'
+      #             )
+      sliderInput("menu_cluster", 
+                  "Výběr klastru dopravních nehod", 
+                  min = 1,
+                  max = maxN$N,
+                  step = 1,
+                  value = 1,
+                  width = '100%'
+      )
+    )
+  })
+  
+  ###### Boxes #####
+  
+  output$box_acc_n_hot <- renderValueBox({
+    if(length(input$menu_cluster) == 0){
+      selected_cluster <- 1
+    }else{
+      selected_cluster <- input$menu_cluster
+    }
+    
+    cll <- get_clusters()
+    cll <- cll$accidents |>
+      dplyr::filter(cluster == selected_cluster)
+    
+    clusters_accidents <- get_accidents() |>
+      dplyr::filter(accident_id %in% cll$accident_id)
+    
+    n1 <- nrow(clusters_accidents)
+    
+    pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
+    
+    valueBox(
+      pr, "Dopravních nehod", 
+      color = "light-blue",
+      icon = icon("car-burst")
+    )
+  })
+  
+  output$box_death_n_hot <- renderValueBox({
+    if(length(input$menu_cluster) == 0){
+      selected_cluster <- 1
+    }else{
+      selected_cluster <- input$menu_cluster
+    }
+    
+    cll <- get_clusters()
+    cll <- cll$accidents |>
+      dplyr::filter(cluster == selected_cluster)
+    
+    clusters_accidents <- get_accidents() |>
+      dplyr::filter(accident_id %in% cll$accident_id)
+    
+    n1 <- clusters_accidents |> 
+      dplyr::pull(accident_dead) |> 
+      sum(na.rm = TRUE)
+    
+    pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
+    
+    valueBox(
+      pr, "Usmrceno osob", 
+      color = "light-blue",
+      icon = icon("skull-crossbones")
+    )
+  })
+  
+  output$box_swound_n_hot <- renderValueBox({
+    if(length(input$menu_cluster) == 0){
+      selected_cluster <- 1
+    }else{
+      selected_cluster <- input$menu_cluster
+    }
+    
+    cll <- get_clusters()
+    cll <- cll$accidents |>
+      dplyr::filter(cluster == selected_cluster)
+    
+    clusters_accidents <- get_accidents() |>
+      dplyr::filter(accident_id %in% cll$accident_id)
+    
+    n1 <- clusters_accidents |> 
+      dplyr::pull(accident_serious_injury) |> 
+      sum(na.rm = TRUE)
+    
+    pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
+    
+    valueBox(
+      pr, "Těžce zraněno osob", 
+      color = "light-blue",
+      icon = icon("crutch")
+    )
+  })
+  
+  output$box_lwound_n_hot <- renderValueBox({
+    if(length(input$menu_cluster) == 0){
+      selected_cluster <- 1
+    }else{
+      selected_cluster <- input$menu_cluster
+    }
+    
+    cll <- get_clusters()
+    cll <- cll$accidents |>
+      dplyr::filter(cluster == selected_cluster)
+    
+    clusters_accidents <- get_accidents() |>
+      dplyr::filter(accident_id %in% cll$accident_id)
+    
+    n1 <- clusters_accidents |> 
+      dplyr::pull(accident_light_injury) |> 
+      sum(na.rm = TRUE)
+    
+    pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
+    
+    valueBox(
+      pr, "Lehce zraněno osob", 
+      color = "light-blue",
+      icon = icon("user-injured")
+    )
   })
   
   ###### Figures ######
   
   output$fig_clusters <- renderPlot({
-    data_hotspots <- get_hotspots()
+    data_clusters <- get_clusters()
     
-    data_hotspots$cluster_statistics |>
+    data_clusters$clusters |>
+      sf::st_drop_geometry() |>
+      tidyr::drop_na() |>
+      #dplyr::slice_max(ordervalue, n = 30) |>
       ggplot(
-        aes(x = factor(cluster), y = cost)
+        aes(x = cluster, y = ordervalue)
       ) +
-      geom_col()
+      geom_vline(
+        xintercept = input$menu_cluster,
+        color = "red",
+        linetype = 2
+      ) +
+      geom_line() +
+      geom_point() +
+      scale_y_continuous(
+        "Závažnost klastru\nnehod"
+      ) +
+      scale_x_continuous(
+        "Pořadí klastru nehod podle závažnosti"
+      ) +
+      theme_classic(
+        base_size = 16
+      ) +
+      theme(
+        legend.position = "bottom",
+        legend.title = element_blank()
+      )
+  })
+  
+  output$fig_age_hot <- renderPlot({
+    if(length(input$menu_cluster) == 0){
+      selected_cluster <- 1
+    }else{
+      selected_cluster <- input$menu_cluster
+    }
+    
+    cll <- get_clusters()
+    cll <- cll$accidents |>
+      dplyr::filter(cluster == selected_cluster)
+    
+    clusters_accidents <- get_accidents() |>
+      dplyr::filter(accident_id %in% cll$accident_id)
+    
+      clusters_accidents |>
+      sf::st_drop_geometry() |>
+      tidyr::drop_na(driver_age) |>
+      dplyr::mutate(
+        agecat = cut(driver_age, breaks = c(0,5,9,14,17,20,24,34,44,54,64,Inf))
+      ) |>
+      dplyr::group_by(
+        agecat,
+        .drop = FALSE
+      ) |> 
+      dplyr::summarise(
+        value = dplyr::n()
+      ) |>
+      ggplot(
+        aes(y = value, x = agecat)
+      ) +
+      geom_col(
+        fill = "#377eb8"
+      ) +
+      scale_x_discrete(
+        "Věk řidiče"
+      ) +
+      scale_y_continuous(
+        "Počet nehod"
+      ) +
       theme_classic(
         base_size = 16
       ) +
@@ -1272,24 +1508,48 @@ server <- function(input, output, session) {
   
   output$mphot <- renderLeaflet({
     
-    data_hotspots <- get_hotspots()
+    data_clusters <- get_clusters()
     
-    hotspots_accidents <- get_accidents() |>
+    clusters_accidents <- get_accidents() |>
       dplyr::filter(
-        accident_id %in% data_hotspots$accidents$accident_id
+        accident_id %in% data_clusters$accidents$accident_id
+      ) |>
+      dplyr::mutate(
+        label = str_c(
+          "<b>ID nehody: </b>", accident_id,"<br>",
+          "<b>Datum nehody: </b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
+          "<b>Počet mrtvých: </b>", accident_dead,"<br>",
+          "<b>Počet těžce zraněných: </b>", accident_serious_injury,"<br>",
+          "<b>Počet lehce zraněných: </b>", accident_light_injury,"<br>",
+          "<b>Škoda na majetku: </b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
+        )
       )
     
-    hotspots <- data_hotspots$cluster_statistics |>
+    clusters <- data_clusters$clusters |>
       dplyr::select(
-        cluster
+        cluster,ordervalue
       )
     
-    hotspots_point <- 
-      data_hotspots$cluster_statistics |>
-      st_centroid() |>
+    if(length(input$menu_cluster) == 0){
+      selected_cluster <- 1
+    }else{
+      selected_cluster <- input$menu_cluster
+    }
+      
+    clusters_hull <-
+      data_clusters$clusters |>
+      dplyr::filter(
+        cluster == selected_cluster
+      ) |>
+      sf::st_convex_hull() |>
+      sf::st_buffer(dist = 200) |>
       dplyr::select(
-        cluster
+        cluster,ordervalue
       )
+    
+    # clusters_point <-
+    #   clusters_hull |>
+    #   sf::st_centroid()
     
     leaflet(data = get_map_district()) |>
       addProviderTiles(providers$CartoDB.Positron, group = "Positron") |>
@@ -1298,32 +1558,35 @@ server <- function(input, output, session) {
       addPolygons(
         fill = FALSE
       ) |> 
-      # addPolylines(
-      #   data = densities,
-      #   group = "Hustoty",
-      #   color = "#41b6c4"
-      # ) |>
+      addPolygons(
+        data = clusters_hull,
+        fillColor = "#f7fcb9",
+        color = "#31a354",
+        #fillOpacity =,
+        smoothFactor = 5
+      ) |>
       addPolylines(
-        data = sf::st_geometry(hotspots),
+        data = sf::st_geometry(clusters),
         group = "Hustoty",
         color = "red"
       ) |>
       addCircleMarkers(
         data = st_jitter(
-          hotspots_accidents, factor = 0.0002
+          clusters_accidents, factor = 0.0002
         ),
-        radius = 5,
+        radius = 3,
         color = "black",
         weight = 1,
-        fillOpacity = 0.5
+        fillOpacity = 0.5,
+        popup = ~label
       ) |>
-      addLabelOnlyMarkers(
-        data = hotspots_point,
-        #lng = ~X,
-        #lat = ~Y,
-        label = ~as.character(cluster),
-        labelOptions = labelOptions(noHide = T, direction = 'top', textOnly = T, textsize = "20px")
-      ) |>
+      # addLabelOnlyMarkers(
+      #   data = clusters_point,
+      #   #lng = ~X,
+      #   #lat = ~Y,
+      #   label = ~as.character(cluster),
+      #   labelOptions = labelOptions(noHide = T, direction = 'top', textOnly = T, textsize = "20px")
+      # ) |>
       addLayersControl(
         baseGroups = c("Positron", "OSM (default)", "Satelite"),
         options = layersControlOptions(collapsed = TRUE),
@@ -1337,6 +1600,232 @@ server <- function(input, output, session) {
     
   })
   
+  ###### Tables ######
+  output$tab_casualties_hot <- renderTable(
+    width = "100%",
+    striped = TRUE,
+    colnames = FALSE,
+    align = "lr",
+    {
+      
+      if(length(input$menu_cluster) == 0){
+        selected_cluster <- 1
+      }else{
+        selected_cluster <- input$menu_cluster
+      }
+      
+      cll <- get_clusters()
+      cll <- cll$accidents |>
+        dplyr::filter(cluster == selected_cluster)
+      
+      clusters_accidents <- get_accidents() |>
+        dplyr::filter(accident_id %in% cll$accident_id)
+      
+      out <- 
+        clusters_accidents %>% 
+        sf::st_drop_geometry() |> 
+        dplyr::select(
+          starts_with("casualties")
+        ) |> 
+        dplyr::summarise(
+          across(
+            everything(),
+            sum
+          )
+        ) |> 
+        tidyr::pivot_longer(
+          everything()
+        ) |>
+        dplyr::filter(value > 0) |>
+        dplyr::mutate(
+          name = factor(
+            name, 
+            levels = names(casualties_nolinebreaks),
+            labels = casualties_nolinebreaks
+          ) |> as.character()
+        ) |>
+        dplyr::arrange(desc(value)) %>%
+        dplyr::mutate(
+          name = factor(name, levels = unique(name)),
+          value = format(value, trim = TRUE, nsmall = 0, big.mark = " ")
+        )
+      
+      if(nrow(out) != 0){
+        return(out)
+      }else{
+        return(tribble(
+          ~name, ~value,
+          "Ve výběru nejsou žádné smrtelné nehody.",""
+        ))
+      }
+    })
+  
+  
+  output$tab_fault_hot <- renderTable(
+    width = "100%",
+    striped = TRUE,
+    colnames = FALSE,
+    align = "lr",
+    {
+      
+      if(length(input$menu_cluster) == 0){
+        selected_cluster <- 1
+      }else{
+        selected_cluster <- input$menu_cluster
+      }
+      
+      cll <- get_clusters()
+      cll <- cll$accidents |>
+        dplyr::filter(cluster == selected_cluster)
+      
+      clusters_accidents <- get_accidents() |>
+        dplyr::filter(accident_id %in% cll$accident_id)
+      
+      out <- clusters_accidents |>
+        sf::st_drop_geometry() |> 
+        dplyr::group_by(accident_fault) |>
+        dplyr::summarise(
+          value = n(),
+          .groups = "drop"
+        ) |>
+        dplyr::rename(name = accident_fault) |>
+        dplyr::filter(value > 0) |>
+        dplyr::mutate(
+          name = factor(
+            name, 
+            levels = names(faults_nolinebreaks),
+            labels = faults_nolinebreaks
+          ) |> as.character()
+        ) |>
+        dplyr::arrange(desc(value)) %>%
+        dplyr::mutate(
+          name = factor(name, levels = unique(name)),
+          value = format(value, trim = TRUE, nsmall = 0, big.mark = " ")
+        )
+      
+      if(nrow(out) != 0){
+        return(out)
+      }else{
+        return(tribble(
+          ~name, ~value,
+          "Ve výběru nejsou žádné zaviněné nehody.",""
+        ))
+      }
+    })
+  
+  
+  output$tab_causes_hot <- renderTable(
+    width = "100%",
+    striped = TRUE,
+    colnames = FALSE,
+    align = "lr",
+    {
+      if(length(input$menu_cluster) == 0){
+        selected_cluster <- 1
+      }else{
+        selected_cluster <- input$menu_cluster
+      }
+      
+      cll <- get_clusters()
+      cll <- cll$accidents |>
+        dplyr::filter(cluster == selected_cluster)
+      
+      clusters_accidents <- get_accidents() |>
+        dplyr::filter(accident_id %in% cll$accident_id)
+      
+      out <- clusters_accidents |>
+        sf::st_drop_geometry() |>
+        dplyr::select(
+          accident_cause
+        ) |>
+        dplyr::group_by(
+          accident_cause
+        ) |>
+        dplyr::summarise(
+          value = dplyr::n()
+        ) |>
+        dplyr::slice_max(value, n = 10) |>
+        dplyr::mutate(
+          accident_cause = factor(accident_cause, 
+                                  levels = names(causes_nolinebreaks),
+                                  labels = causes_nolinebreaks
+          ) |> as.character()
+        ) |>
+        dplyr::arrange(desc(value)) |>
+        dplyr::mutate(
+          accident_cause = factor(accident_cause, 
+                                  levels = accident_cause),
+          value = format(value, trim = TRUE, nsmall = 0, big.mark = " ")
+        ) |>
+        dplyr::rename(name = accident_cause)
+      
+      if(nrow(out) != 0){
+        return(out)
+      }else{
+        return(tribble(
+          ~name, ~value,
+          "Ve výběru nejsou žádné nehody se známou příčinou.",""
+        ))
+      }
+    })
+  
+  output$tab_type_hot <- renderTable(
+    width = "100%",
+    striped = TRUE,
+    colnames = FALSE,
+    align = "lr",
+    {
+      if(length(input$menu_cluster) == 0){
+        selected_cluster <- 1
+      }else{
+        selected_cluster <- input$menu_cluster
+      }
+      
+      cll <- get_clusters()
+      cll <- cll$accidents |>
+        dplyr::filter(cluster == selected_cluster)
+      
+      clusters_accidents <- get_accidents() |>
+        dplyr::filter(accident_id %in% cll$accident_id)
+      
+      out <- clusters_accidents |>
+        sf::st_drop_geometry() |>
+        dplyr::select(
+          accident_type
+        ) |>
+        # dplyr::filter(
+        #   accident_type != 0
+        # ) |>
+        dplyr::group_by(
+          accident_type
+        ) |>
+        dplyr::summarise(
+          value = dplyr::n()
+        ) |>
+        dplyr::slice_max(value, n = 5) |>
+        dplyr::mutate(
+          accident_type = factor(accident_type, 
+                                 levels = names(crashtype_nolinebreaks),
+                                 labels = crashtype_nolinebreaks
+          ) |> as.character()
+        ) |>
+        dplyr::arrange(desc(value)) |>
+        dplyr::mutate(
+          accident_type = factor(accident_type, 
+                                 levels = accident_type),
+          value = format(value, trim = TRUE, nsmall = 0, big.mark = " ")
+        ) |>
+        dplyr::rename(name = accident_type)
+      
+      if(nrow(out) != 0){
+        return(out)
+      }else{
+        return(tribble(
+          ~name, ~value,
+          "Ve výběru nejsou žádné nehody se známou příčinou.",""
+        ))
+      }
+    })
   
   
   ##### Accidents #####
@@ -1624,7 +2113,14 @@ server <- function(input, output, session) {
         )
       )
     
-    fpal <- colorFactor("Set1", domain = fdata$nasledky, levels = levels(fdata$nasledky))
+    #fpal <- colorFactor("Set1", domain = fdata$nasledky, levels = levels(fdata$nasledky))
+    fpal <- colorFactor("Set1", domain = fdata$nasledky, 
+                        levels = c(
+                          "Nehoda s obětí na životech",
+                          "Nehoda s těžkým zraněním",
+                          "Nehoda s lehkým zraněním",
+                          "Ostatní nehody"
+                        ))
     
     leaflet(data = get_map_district()) |>
       #leaflet(data = select_()) %>%
@@ -1666,7 +2162,8 @@ server <- function(input, output, session) {
         color = "black",
         weight = 1,
         fillColor = ~fpal(nasledky),
-        fillOpacity = 0.5
+        fillOpacity = 0.5,
+        popup = ~label
       ) %>% 
       addLegend(
         title = "Následky nehody",
@@ -1689,7 +2186,14 @@ server <- function(input, output, session) {
         )
       )
     
-    fpal <- colorFactor("Set1", domain = fdata$nasledky, levels = levels(fdata$nasledky))
+    #fpal <- colorFactor("Set1", domain = fdata$nasledky, levels = levels(fdata$nasledky))
+    fpal <- colorFactor("Set1", domain = fdata$nasledky, 
+                        levels = c(
+                          "Nehoda s obětí na životech",
+                          "Nehoda s těžkým zraněním",
+                          "Nehoda s lehkým zraněním",
+                          "Ostatní nehody"
+                        ))
     
     leafletProxy("mpacc") |>
       clearControls() |>
@@ -1704,7 +2208,8 @@ server <- function(input, output, session) {
         color = "black",
         weight = 1,
         fillColor = ~fpal(nasledky),
-        fillOpacity = 0.5
+        fillOpacity = 0.5,
+        popup = ~label
       ) %>% 
       addLegend(
         title = "Následky nehody",
@@ -1727,7 +2232,9 @@ server <- function(input, output, session) {
         druh_nehody = as.character(druh_nehody)
       )
       
-    fpal <- colorFactor("Set1", domain = fdata$druh_nehody, levels = levels(fdata$druh_nehody))
+    #fpal <- colorFactor("Set1", domain = fdata$druh_nehody, levels = levels(fdata$druh_nehody))
+    fpal <- colorFactor("Set1", domain = fdata$druh_nehody, 
+                        levels = crashtype_nolinebreaks)
     
     leafletProxy("mpacc") |>
       clearControls() |>

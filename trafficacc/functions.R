@@ -9,6 +9,7 @@ library(stringr, quietly = TRUE)
 library(sf, quietly = TRUE)
 library(fs, quietly = TRUE)
 library(readr, quietly = TRUE)
+library(s2, quietly = TRUE)
 
 library(shiny, quietly = TRUE)
 library(shinydashboard, quietly = TRUE)
@@ -43,13 +44,13 @@ list_options <- function(){
     DATA_REPOSITORY
   ) |>
     stringr::str_subset(
-      stringr::str_c(DATA_REPOSITORY,"shiny")
+      stringr::str_c(DATA_REPOSITORY,"clusters")
     ) |>
     stringr::str_remove_all(
       DATA_REPOSITORY
     ) |>
     stringr::str_remove_all(".rds") |>
-    stringr::str_remove_all("shiny_") |>
+    stringr::str_remove_all("clusters_") |>
     tibble::tibble(
       file = _
     ) |>
@@ -83,10 +84,10 @@ list_options <- function(){
 # Note: The function is design to work with parameters delivered by list_options()
 # 
 
-read_hotspots <- function(district = NULL, profile = "default", period_start = NULL, period_end = NULL){
+read_clusters <- function(district = NULL, profile = "default", period_start = NULL, period_end = NULL){
   rdsfile <- stringr::str_c(
     DATA_REPOSITORY,
-    "shiny_",
+    "clusters_",
     district,"_",
     profile,"_",
     as.character(period_start),"_",
@@ -247,6 +248,10 @@ MENU <- list(
     "S účastí cyklisty"="bike",
     "S účastí motocyklisty"="motobike",
     "Pod vlivem alkoholu"="alcohol"
+  ),
+  sorting = c(
+    "Celková škoda (v milionech korun)" = "cost",
+    "Škoda na metr" = "cost_per_meter"
   )
 )
 
