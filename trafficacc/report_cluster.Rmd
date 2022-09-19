@@ -2,10 +2,13 @@
 title: "Analýza klastru dopravních nehod"
 output: html_document
 params:
-  data_clusters: NA
-  all_accidents: NA
   period: NA
   cluster_id: NA
+  data_clusters: NA
+  all_accidents: NA
+  quantile: NA
+  spill: NA
+  profile: NA
 ---
 
 ```{r, echo = FALSE}
@@ -58,25 +61,41 @@ format_integer <- function(x){
 }
 ```
 
-**Období:** `r params$period``
+**Období:** `r params$period`
 
+**Nastaveni:**
 
+- Promile nejhorších úseků: `r params$quantile`
+- Dodatečný rozliv klastrů: `r params$spill` lixelů (jeden lixel je v průměru asi 5 metrů)
+- Profil: `r params$profile`
 
 ```{r, echo=FALSE, fig.align='center', fig.height=6}
 if(nrow(data_accidents) <= 200){
 
-accidents_buffer <- data_accidents %>% 
-  st_convex_hull() %>% 
+cluster_lines <- 
+  params$data_clusters$clusters %>%
+  filter(cluster == selected_cluster) %>% 
+  st_geometry()
+
+cluster_buffer <- 
+  cluster_lines %>% 
+  st_convex_hull() %>%
   st_buffer(100)
-  
-bg_map <- read_osm(accidents_buffer)
+
+bg_map <- read_osm(cluster_buffer)
 
 tm_shape(bg_map) +
   tm_rgb() +
+  tm_shape(cluster_lines) +
+  tm_lines(
+    col = "red",
+    alpha = 0.6,
+    scale = 3
+  ) +
   tm_shape(data_accidents) +
   tm_dots(
-    size = 3,
-    alpha = 0.6
+    size = 2,
+    alpha = 1
   )
 
 }else{
@@ -268,7 +287,6 @@ data_accidents |>
       caption = "Nejčastější příčiny dopravních nehod"
     )
 ```
-
 
 ```{r, echo=FALSE}
 crashtype_nolinebreaks <- c(

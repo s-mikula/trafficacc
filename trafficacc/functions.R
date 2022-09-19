@@ -19,7 +19,8 @@ library(leaflet, quietly = TRUE)
 library(leaflet.extras, quietly = TRUE)
 
 library(ggplot2, quietly = TRUE)
-library(ggvis, quietly = TRUE)
+#library(ggvis, quietly = TRUE)
+library(rmarkdown, quietly = TRUE)
 
 #### Constants/settings #####
 

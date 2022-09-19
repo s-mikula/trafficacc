@@ -68,14 +68,17 @@ format_integer <- function(x){
 ```{r, echo=FALSE, fig.align='center', fig.height=6}
 if(nrow(params$data_accidents) <= 200){
 
-accidents_buffer <- params$data_accidents %>% 
-  st_convex_hull() %>% 
-  st_buffer(100)
-  
+accidents_buffer <- params$data_accidents %>%
+  st_convex_hull() %>%
+  st_buffer(100) %>%
+  st_bbox()
+
 bg_map <- read_osm(accidents_buffer)
 
 tm_shape(bg_map) +
-  tm_rgb() +
+  tm_rgba(
+    a = 0.7
+  ) +
   tm_shape(params$data_accidents) +
   tm_dots(
     size = 3,

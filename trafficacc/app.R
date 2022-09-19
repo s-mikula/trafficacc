@@ -57,6 +57,7 @@ ui <- dashboardPage(
                        box(
                          h1(textOutput("header_title")),
                          h4(textOutput("header_period")),
+                         # h4(textOutput("header_period_p2")),
                          h4(textOutput("header_filteraccidents")),
                          width = 12
                        )
@@ -313,22 +314,22 @@ ui <- dashboardPage(
                box(
                  tableOutput("tab_casualties_hot"), 
                  title = "Oběti dopravních nehod",
-                 width = 6
+                 width = 12
                ),
                box(
                  tableOutput("tab_fault_hot"), #tab_causes_accidents
                  title = "Nehody podle zavinění",
-                 width = 6
+                 width = 12
                ),
                box(
                  tableOutput("tab_causes_hot"), #tab_type_accidents
                  title = "Nehody podle příčin",
-                 width = 6
+                 width = 12
                ),
                box(
                  tableOutput("tab_type_hot"), #tab_type_accidents
                  title = "Nehody podle příčin",
-                 width = 6
+                 width = 12
                ),
                box(
                  plotOutput("fig_age_hot"),
@@ -485,6 +486,31 @@ server <- function(input, output, session) {
   })
   
   output$header_period <- renderText({
+    # # Duration of p1 in days
+    # p2_length <- input$menu_period[2] - input$menu_period[1]
+    # p2_length <- as.double(p2_length)
+    # 
+    # # End date of comparison period (p2)
+    # p2_end <- input$menu_period[1]
+    # p2_end <- p2_end - 1
+    # 
+    # # Start date of comparison period (p2)
+    # p2_start <- p2_end - p2_length
+    # 
+    # p2_string <- stringr::str_c(
+    #   strftime(p2_start, format = "%d.%m.%Y"),
+    #   " - ",
+    #   strftime(p2_end, format = "%d.%m.%Y")
+    # )
+    
+    stringr::str_c("Základní období: ",
+                   strftime(input$menu_period[1], format = "%d.%m.%Y"),
+                   " - ",
+                   strftime(input$menu_period[2], format = "%d.%m.%Y")
+    )
+  })
+  
+  output$header_period_p2 <- renderText({
     # Duration of p1 in days
     p2_length <- input$menu_period[2] - input$menu_period[1]
     p2_length <- as.double(p2_length)
@@ -502,11 +528,7 @@ server <- function(input, output, session) {
       strftime(p2_end, format = "%d.%m.%Y")
     )
     
-    stringr::str_c("Základní období: ",
-                   strftime(input$menu_period[1], format = "%d.%m.%Y"),
-                   " - ",
-                   strftime(input$menu_period[2], format = "%d.%m.%Y"),
-                   ";\nSrovnávací období: ",
+    stringr::str_c("Srovnávací období: ",
                    p2_string
     )
   })
@@ -1626,6 +1648,34 @@ server <- function(input, output, session) {
     
   })
   
+  # observeEvent(input$map_cluster, {
+  #   
+  #   data_clusters <- get_clusters()
+  #   
+  #   if(length(input$menu_cluster) == 0){
+  #     selected_cluster <- 1
+  #   }else{
+  #     selected_cluster <- input$menu_cluster
+  #   }
+  #   
+  #   clusters_hull <-
+  #     data_clusters$clusters |>
+  #     dplyr::filter(
+  #       cluster == selected_cluster
+  #     ) |>
+  #     sf::st_convex_hull() |>
+  #     sf::st_buffer(dist = 200) |>
+  #     dplyr::select(
+  #       cluster,ordervalue
+  #     )
+  #   
+  #   leafletProxy("mphot") %>% 
+  #     setView(
+  #       lng = this_shape$lng,
+  #       lat = this_shape$lat,
+  #       zoom = 8)
+  # })
+  
   ###### Tables ######
   output$tab_casualties_hot <- renderTable(
     width = "100%",
@@ -2312,7 +2362,7 @@ server <- function(input, output, session) {
       as.vector() |>
       as.character()
     
-    session$sendCustomMessage("map_polygon", map_selection_polygon_vec)
+    #session$sendCustomMessage("map_polygon", map_selection_polygon_vec)
     session$sendCustomMessage("map_selection", map_selection_vec)
     
     leafletProxy("mpacc") |>
@@ -2406,7 +2456,10 @@ server <- function(input, output, session) {
         data_clusters = get_clusters(),
         all_accidents = get_accidents_district(),
         cluster_id = input$menu_cluster,
-        period = input$menu_period_hotspots
+        period = input$menu_period_hotspots,
+        quantile = input$menu_quantile,
+        spill = input$menu_spill,
+        profile = names(MENU$profile[MENU$profile == input$menu_profile])
       )
       
       # Knit the document, passing in the `params` list, and eval it in a
@@ -2418,8 +2471,8 @@ server <- function(input, output, session) {
       )
     }
   )
-  
-}
+} 
+
 
 
 
