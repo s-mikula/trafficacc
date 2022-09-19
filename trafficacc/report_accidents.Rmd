@@ -16,12 +16,12 @@ library(lubridate, quietly = TRUE)
 library(purrr, quietly = TRUE)
 library(stringr, quietly = TRUE)
 library(sf, quietly = TRUE)
-library(fs, quietly = TRUE)
-library(readr, quietly = TRUE)
+#library(fs, quietly = TRUE)
+#library(readr, quietly = TRUE)
 library(ggplot2, quietly = TRUE)
 library(tmaptools, quietly = TRUE)
 library(tmap, quietly = TRUE)
-library(OpenStreetMap, quietly = TRUE)
+#library(OpenStreetMap, quietly = TRUE)
 library(knitr, quietly = TRUE)
 ```
 
@@ -61,32 +61,46 @@ format_integer <- function(x){
 }
 ```
 
-**Základní období:** `r period``
+**Základní období:** `r period`
 
 **Výběr nehod:** `r accidents`
 
 ```{r, echo=FALSE, fig.align='center', fig.height=6}
-if(nrow(params$data_accidents) <= 200){
+if(nrow(params$data_accidents) > 0){
 
-accidents_buffer <- params$data_accidents %>%
-  st_convex_hull() %>%
-  st_buffer(100) %>%
-  st_bbox()
+accidents_buffer <- 
+  params$data_accidents %>%
+  st_geometry() %>% 
+  st_union() %>% 
+  st_convex_hull()
 
-bg_map <- read_osm(accidents_buffer)
+if(as.double(st_area(accidents_buffer)) <= 10000000){
 
-tm_shape(bg_map) +
-  tm_rgba(
-    a = 0.7
-  ) +
+read_osm(
+  accidents_buffer,
+  ext = 1.1
+) %>% 
+  tm_shape() +
+  tm_rgb() +
+  # tm_shape(accidents_buffer) +
+  # tm_polygons() +
   tm_shape(params$data_accidents) +
   tm_dots(
-    size = 3,
-    alpha = 0.6
+    size = 1,
+    shape = 21,
+    jitter = 0.1,
+    alpha = 0.3,
+    col = "red",
+    border.col = "black",
+    border.alpha = 1
   )
+  
+}else{
+  print("Mapa se vykresluje pro výběry s plochou menší než 10 km2.")
+}
 
 }else{
-  print("Ve výběru je příliš mnoho nehod pro vykreslení mapy.")
+  print("Ve výběru nejsou žádné nehody.")
 }
 
 ```

@@ -12,22 +12,30 @@ params:
 ---
 
 ```{r, echo = FALSE}
-library(dtplyr, quietly = TRUE)
+# library(dtplyr, quietly = TRUE)
 library(tibble, quietly = TRUE)
 library(dplyr, quietly = TRUE)
 library(tidyr, quietly = TRUE)
 library(lubridate, quietly = TRUE)
 library(purrr, quietly = TRUE)
 library(stringr, quietly = TRUE)
-library(sf, quietly = TRUE)
-library(fs, quietly = TRUE)
-library(readr, quietly = TRUE)
+# library(sf, quietly = TRUE)
+# library(fs, quietly = TRUE)
+# library(readr, quietly = TRUE)
 library(ggplot2, quietly = TRUE)
-library(tmaptools, quietly = TRUE)
 library(tmap, quietly = TRUE)
-library(OpenStreetMap, quietly = TRUE)
+library(tmaptools, quietly = TRUE)
+# library(OpenStreetMap, quietly = TRUE)
 library(knitr, quietly = TRUE)
 ```
+
+**Období:** `r params$period`
+
+**Nastaveni:**
+
+- Promile nejhorších úseků: `r params$quantile`
+- Dodatečný rozliv klastrů: `r params$spill` lixelů (jeden lixel je v průměru asi 5 metrů)
+- Profil: `r params$profile`
 
 ```{r, echo=FALSE}
 if(length(params$cluster_id) == 0){
@@ -61,41 +69,53 @@ format_integer <- function(x){
 }
 ```
 
-**Období:** `r params$period`
-
-**Nastaveni:**
-
-- Promile nejhorších úseků: `r params$quantile`
-- Dodatečný rozliv klastrů: `r params$spill` lixelů (jeden lixel je v průměru asi 5 metrů)
-- Profil: `r params$profile`
-
 ```{r, echo=FALSE, fig.align='center', fig.height=6}
 if(nrow(data_accidents) <= 200){
 
-cluster_lines <- 
+cluster_lines <-
   params$data_clusters$clusters %>%
-  filter(cluster == selected_cluster) %>% 
+  filter(cluster == selected_cluster) %>%
   st_geometry()
 
-cluster_buffer <- 
-  cluster_lines %>% 
-  st_convex_hull() %>%
-  st_buffer(100)
+# cluster_buffer <-
+#   cluster_lines %>%
+#   st_convex_hull() %>%
+#   st_buffer(100)
 
-bg_map <- read_osm(cluster_buffer)
+# bg_map <- read_osm(cluster_buffer)
+# 
+# tm_shape(bg_map) +
+#   tm_rgb() +
 
-tm_shape(bg_map) +
+#tmap_mode("plot")
+# tm_basemap(
+#   leaflet::providers$Stamen.Watercolor
+# ) +
+
+
+read_osm(
+  cluster_lines,
+  ext = 1.1
+) %>% 
+  tm_shape() +
   tm_rgb() +
-  tm_shape(cluster_lines) +
+  tm_shape(
+    cluster_lines
+    ) +
   tm_lines(
     col = "red",
     alpha = 0.6,
-    scale = 3
+    scale = 5
   ) +
   tm_shape(data_accidents) +
   tm_dots(
-    size = 2,
-    alpha = 1
+    size = 1,
+    shape = 21,
+    jitter = 0.2,
+    alpha = 0.3,
+    col = "red",
+    border.col = "black",
+    border.alpha = 1
   )
 
 }else{
@@ -103,7 +123,6 @@ tm_shape(bg_map) +
 }
 
 ```
-
 
 **Přehled nehod:**
 
