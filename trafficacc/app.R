@@ -2343,17 +2343,25 @@ server <- function(input, output, session) {
   observeEvent(input$mpacc_draw_new_feature,{
     polygon_coordinates <- input$mpacc_draw_new_feature$geometry$coordinates[[1]]
     
+    
+    # Accidents
+    sf_accidents <- get_accidents()
+    
+    
     # Create sf polygon
     map_selection_polygon <- 
       do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |>
       sf::st_multipoint() |>
       sf::st_cast("POLYGON") |>
       sf::st_sfc() |>
-      sf::st_set_crs(4326)
+      sf::st_set_crs(4326) |>
+      sf::st_transform(
+        crs = sf::st_crs(sf_accidents)
+      )
     
     map_selection_vec <- 
       map_selection_polygon |>
-      sf::st_intersection(get_accidents(),y = _) |>
+      sf::st_intersection(sf_accidents,y = _) |>
       dplyr::pull(accident_id) |>
       as.character()
     
