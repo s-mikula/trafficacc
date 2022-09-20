@@ -277,6 +277,7 @@ ui <- dashboardPage(
                        box(
                          p("Generování HTML reportu pro velké množství nehod může trvat dlouhou dobu."),
                          downloadButton("report_cluster", "Report"),
+                         downloadButton("downloadPOLY", "GeoJSON"),
                          status = "warning",
                          width = 12
                        )
@@ -1551,6 +1552,31 @@ server <- function(input, output, session) {
         axis.title.y = element_blank()
       )
   })
+  
+  ###### Polygon #####
+  
+  output$downloadPOLY <- downloadHandler(
+    filename = "cluster.GeoJSON",
+    content = function(file) {
+      data_clusters <- get_clusters()
+      
+      if(length(input$menu_cluster) == 0){
+        selected_cluster <- 1
+      }else{
+        selected_cluster <- input$menu_cluster
+      }
+      
+      data_clusters$clusters |>
+        dplyr::filter(
+          cluster == selected_cluster
+        ) |>
+        sf::st_geometry() |>
+        sf::st_union() |>
+        sf::st_buffer(50) |>
+        #geojsonsf::geojson_sf() |>
+        sf::st_write(dsn = file, driver = "GeoJSON")
+    }
+  )
   
   ###### Maps ######
   
