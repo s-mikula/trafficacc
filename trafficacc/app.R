@@ -381,7 +381,7 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(3,
+                column(2,
                        box(
                          selectInput(
                            "menu_filteraccidents_accidents",
@@ -394,7 +394,21 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(4,
+                column(2,
+                       box(
+                         "Omezit na nehody v ",
+                         actionLink("cluster_zoom","oblasti poslední vybrané nehodové lokality"),
+                         materialSwitch(
+                           "menu_filteraccidents_cluster",
+                           "",
+                           value = FALSE,
+                           width = '100%'
+                         ),
+                         status = "warning",
+                         width = 12
+                       )
+                ),
+                column(3,
                        box(
                          p("Výběr polygonu na mapě omezuje výběr dopravních nehod na danou oblast. 
                               Ostatní nastavené filtry zůstavájí v platnosti (AND)."),
@@ -428,7 +442,14 @@ ui <- dashboardPage(
                             ), 
                             selected = "nasledky"),
                             width = 6
-                            )
+                            )#,
+                      # box(
+                      #   "Vyhledání poslední vybrané nehodové lokality",
+                      #   actionButton(
+                      #     "cluster_zoom", 
+                      #     label = "Zoom"),
+                      #   width = 6
+                      # )
                         ),
               column(5,
                         valueBoxOutput("box_acc_n_box", width = 3),
@@ -637,6 +658,15 @@ server <- function(input, output, session) {
             accident_id %in% input$map_selection
           )
       }
+    }
+    
+    
+    if(input$menu_filteraccidents_cluster){
+      out <-
+        sf::st_filter(
+          x = out,
+          y = get_clusterPOLY()
+          )
     }
     
     # if(length(input$map_polygon) > 1){
@@ -2407,6 +2437,32 @@ server <- function(input, output, session) {
         opacity = 1
       )
     
+  })
+  
+  observeEvent(input$cluster_zoom,{
+    
+    data_clusters <- get_clusters()
+
+    if(length(input$menu_cluster) == 0){
+      selected_cluster <- 1
+    }else{
+      selected_cluster <- input$menu_cluster
+    }
+
+    zoom_clusters <-
+      data_clusters$clusters |>
+      dplyr::filter(
+        cluster == selected_cluster
+      ) |>
+      dplyr::select(X,Y)
+
+    leafletProxy("mpacc") |>
+      setView(
+        lng = zoom_clusters$X[1],
+        lat = zoom_clusters$Y[1],
+        zoom = 16
+      )
+
   })
   
   #### Výběr polygonu na mapě
