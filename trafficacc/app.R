@@ -650,13 +650,44 @@ server <- function(input, output, session) {
         accident_date <= input$menu_period_accidents[2]
       )
     
-    if(length(input$map_selection) != 0){
-      if(input$map_selection[1] != "none"){
-      out <-
-        out |>
-          dplyr::filter(
-            accident_id %in% input$map_selection
-          )
+    # if(length(input$map_selection) != 0){
+    #   if(input$map_selection[1] != "none"){
+    #   out <-
+    #     out |>
+    #       dplyr::filter(
+    #         accident_id %in% input$map_selection
+    #       )
+    #   }
+    # }
+    
+    if(length(input$mpacc_draw_new_feature) != 0){
+      
+      
+      # polygon_coordinates <- input$mpacc_draw_new_feature$geometry$coordinates[[1]]
+      # 
+      # map_selection_polygon <- 
+      #   do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |>
+      #   sf::st_multipoint() |>
+      #   sf::st_cast("POLYGON") |>
+      #   sf::st_sfc() |>
+      #   sf::st_set_crs(4326) |>
+      #   sf::st_transform(
+      #     crs = sf::st_crs(out)
+      #   )
+      
+      if(length(input$map_selection) != 0){
+      if(input$map_selection == "yes"){
+          map_selection_polygon <- 
+            get_selectedPOLY() |>
+            sf::st_transform(
+              sf::st_crs(out)
+            )
+          
+          out <- 
+            st_filter(
+              out,map_selection_polygon
+            )
+      }
       }
     }
     
@@ -2467,85 +2498,97 @@ server <- function(input, output, session) {
   
   #### Výběr polygonu na mapě
   
-  # https://redoakstrategic.com/geoshaper/
+  # # https://redoakstrategic.com/geoshaper/
+  # observeEvent(input$mpacc_draw_new_feature,{
+  #   polygon_coordinates <- input$mpacc_draw_new_feature$geometry$coordinates[[1]]
+  #   
+  #   
+  #   # Accidents
+  #   sf_accidents <- get_accidents()
+  #   
+  #   
+  #   # Create sf polygon
+  #   map_selection_polygon <- 
+  #     do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |>
+  #     sf::st_multipoint() |>
+  #     sf::st_cast("POLYGON") |>
+  #     sf::st_sfc() |>
+  #     sf::st_set_crs(4326) |>
+  #     sf::st_transform(
+  #       crs = sf::st_crs(sf_accidents)
+  #     )
+  # 
+  #   map_selection_vec <-
+  #     map_selection_polygon |>
+  #     sf::st_intersection(sf_accidents,y = _) |>
+  #     dplyr::pull(accident_id) |>
+  #     as.character()
+  #   
+  #   map_selection_polygon_vec <- 
+  #     # do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |> 
+  #     # as.character() |>
+  #     # as.vector()
+  #     map_selection_polygon |>
+  #     sf::st_as_sf() |>
+  #     geojsonsf::sf_geojson()
+  #   
+  #   session$sendCustomMessage("map_polygon", map_selection_polygon_vec)
+  #   session$sendCustomMessage("map_selection", map_selection_vec)
+  #   
+  #   leafletProxy("mpacc") |>
+  #     clearGroup("draw_selection") |> 
+  #     clearGroup("draw") |>
+  #     addPolygons(
+  #       data = map_selection_polygon,
+  #       color = "#ff0066",
+  #       group = "draw_selection"
+  #     )
+  #   
+  #   #write_lines(map_selection_polygon_vec, file = "aux.txt")
+  #   
+  #   updateActionButton(session, "removefilter", label = "Smazat filtr")
+  # })
+  
   observeEvent(input$mpacc_draw_new_feature,{
-    polygon_coordinates <- input$mpacc_draw_new_feature$geometry$coordinates[[1]]
-    
-    
-    # Accidents
-    sf_accidents <- get_accidents()
-    
-    
-    # Create sf polygon
-    map_selection_polygon <- 
-      do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |>
-      sf::st_multipoint() |>
-      sf::st_cast("POLYGON") |>
-      sf::st_sfc() |>
-      sf::st_set_crs(4326) |>
-      sf::st_transform(
-        crs = sf::st_crs(sf_accidents)
-      )
-
-    map_selection_vec <-
-      map_selection_polygon |>
-      sf::st_intersection(sf_accidents,y = _) |>
-      dplyr::pull(accident_id) |>
-      as.character()
-    
-    map_selection_polygon_vec <- 
-      # do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |> 
-      # as.character() |>
-      # as.vector()
-      map_selection_polygon |>
-      sf::st_as_sf() |>
-      geojsonsf::sf_geojson()
-    
-    session$sendCustomMessage("map_polygon", map_selection_polygon_vec)
-    session$sendCustomMessage("map_selection", map_selection_vec)
     
     leafletProxy("mpacc") |>
-      clearGroup("draw_selection") |> 
-      clearGroup("draw") |>
-      addPolygons(
-        data = map_selection_polygon,
-        color = "#ff0066",
-        group = "draw_selection"
+      leaflet::removeMarker("selectedPOLY") |>
+      leaflet::addPolygons(
+        layerId = "selectedPOLY",
+        data = get_selectedPOLY()
       )
     
-    #write_lines(map_selection_polygon_vec, file = "aux.txt")
-    
+    session$sendCustomMessage("map_selection", "yes")
     updateActionButton(session, "removefilter", label = "Smazat filtr")
   })
   
   observeEvent(input$removefilter,{
-    leafletProxy("mpacc") %>% clearGroup("draw") %>% clearGroup("draw_selection") 
-    session$sendCustomMessage("map_selection", "none")
-    session$sendCustomMessage("map_polygon", "none")
+    leafletProxy("mpacc") |>
+      leaflet::removeMarker("selectedPOLY")
+
+    session$sendCustomMessage("map_selection", "no")
     updateActionButton(session, "removefilter", label = "Filtr není aktivní")
   })
   
   get_selectedPOLY <- reactive({
     
-    if(length(input$map_polygon) < 1){
+    if(length(input$mpacc_draw_new_feature) == 0){
       out <- get_accidents_district()
       return(out)
-    }
+    }else{
+      
+    polygon_coordinates <- input$mpacc_draw_new_feature$geometry$coordinates[[1]]
     
-    out <- input$map_polygon |>
-      as.double() |>
-      matrix(ncol = 2) |>
-      as.data.frame() |> 
-      sf::st_as_sf(
-        coords = c(1,2),
-        crs = 4326
-      ) %>% 
-      sf::st_geometry() |>
-      sf::st_union() |> 
-      sf::st_cast("POLYGON")
+    out <- 
+      do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |>
+      sf::st_multipoint() |>
+      sf::st_cast("POLYGON") |>
+      sf::st_sfc() |>
+      sf::st_set_crs(4326)
     
     return(out)
     
+    }
   })
   
   #### Reports ####
