@@ -8,7 +8,11 @@ PERIOD_preselected <- OPTIONS |>
   dplyr::slice(1L) |>
   dplyr::pull(period_menu)
 
-load("poldata/map_districts.RData")
+map_districts <- 
+  readr::read_rds(
+    stringr::str_c(APPDATA_REPOSITORY,"districts.rds")
+  ) %>% 
+  sf::st_transform(4326)
 
 # JavaScript, který se používá pro zjištění velikosti obrazovky uživatele
 # jscode <- '
@@ -612,7 +616,7 @@ server <- function(input, output, session) {
     
   })
   
-  # Returns car accident from user-defined period
+  ###### Get data: Box ######
   get_accidents_box <- reactive({
     
     out <- read_accidents(
@@ -634,6 +638,46 @@ server <- function(input, output, session) {
           )
       }
     }
+    
+    # if(length(input$map_polygon) > 1){
+    #   map_selection <- 
+    #     input$map_polygon |>
+    #     as.double() |>
+    #     matrix(ncol = 2) |>
+    #     as.data.frame() |> 
+    #     sf::st_as_sf(
+    #       coords = c(1,2),
+    #       crs = 4326
+    #     ) %>% 
+    #     sf::st_geometry() |>
+    #     sf::st_union() |> 
+    #     sf::st_cast("POLYGON") |>
+    #     sf::st_transform(
+    #       crs = sf::st_crs(out)
+    #     )
+    # }else{
+    #   map_selection <- 
+    #     get_accidents_district() |>
+    #     sf::st_transform(
+    #       crs = sf::st_crs(out)
+    #     )
+    # }
+    
+    
+      #if(input$map_polygon[1] != "none"){
+
+        # out <- 
+        #   sf::st_filter(
+        #     x = out,
+        #     y = get_selectedPOLY()
+        #     )
+
+        # out <- out |>
+        #   sf::st_filter(selected_polygon)
+        #   # sf::st_intersection(
+        #   #   out, selected_polygon
+        #   # )
+      #}
     
     if(input$menu_filteraccidents_accidents == "all"){
       return(out)
@@ -1291,8 +1335,9 @@ server <- function(input, output, session) {
     )
     
     out <- out |>
-      dplyr::filter(quantile == 1-(input$menu_quantile/1000)) |>
-      dplyr::filter(additional_clusters == input$menu_spill)
+      #dplyr::filter(severity == 1-(input$menu_quantile/1000)) |>
+      dplyr::filter(severity == input$menu_quantile) |>
+      dplyr::filter(additional_lixels == input$menu_spill)
     
     clusters <- list()
     clusters$accidents <- out$accidents[[1]]
@@ -1578,6 +1623,28 @@ server <- function(input, output, session) {
     }
   )
   
+  get_clusterPOLY <- reactive({
+    
+    data_clusters <- get_clusters()
+    
+    if(length(input$menu_cluster) == 0){
+      selected_cluster <- 1
+    }else{
+      selected_cluster <- input$menu_cluster
+    }
+    
+    data_clusters$clusters |>
+      dplyr::filter(
+        cluster == selected_cluster
+      ) |>
+      sf::st_geometry() |>
+      sf::st_union() |>
+      sf::st_buffer(50)
+    
+  })
+  
+  #session$sendCustomMessage("map_polygon", map_selection_polygon_vec)
+  
   ###### Maps ######
   
   output$mphot <- renderLeaflet({
@@ -1601,29 +1668,23 @@ server <- function(input, output, session) {
     
     clusters <- data_clusters$clusters |>
       dplyr::select(
-        cluster,ordervalue
+        cluster,ordervalue,X,Y
       )
+    
     
     if(length(input$menu_cluster) == 0){
       selected_cluster <- 1
     }else{
       selected_cluster <- input$menu_cluster
     }
-      
-    clusters_hull <-
+
+    zoom_clusters <-
       data_clusters$clusters |>
       dplyr::filter(
         cluster == selected_cluster
       ) |>
-      sf::st_convex_hull() |>
-      sf::st_buffer(dist = 200) |>
-      dplyr::select(
-        cluster,ordervalue
-      )
+      dplyr::select(X,Y)
     
-    # clusters_point <-
-    #   clusters_hull |>
-    #   sf::st_centroid()
     
     leaflet(data = get_map_district()) |>
       addProviderTiles(providers$CartoDB.Positron, group = "Positron") |>
@@ -1633,8 +1694,8 @@ server <- function(input, output, session) {
         fill = FALSE
       ) |> 
       addPolygons(
-        data = clusters_hull,
-        fillColor = "#f7fcb9",
+        data = get_clusterPOLY(),
+        fillColor = "blue",
         color = "#31a354",
         #fillOpacity =,
         smoothFactor = 5
@@ -1654,13 +1715,13 @@ server <- function(input, output, session) {
         fillOpacity = 0.5,
         popup = ~label
       ) |>
-      # addLabelOnlyMarkers(
-      #   data = clusters_point,
-      #   #lng = ~X,
-      #   #lat = ~Y,
-      #   label = ~as.character(cluster),
-      #   labelOptions = labelOptions(noHide = T, direction = 'top', textOnly = T, textsize = "20px")
-      # ) |>
+      addLabelOnlyMarkers(
+        data = clusters,
+        lng = ~X,
+        lat = ~Y,
+        label = ~as.character(cluster),
+        labelOptions = labelOptions(noHide = T, direction = 'top', textOnly = T, textsize = "20px")
+      ) |>
       addLayersControl(
         baseGroups = c("Positron", "OSM (default)", "Satelite"),
         options = layersControlOptions(collapsed = TRUE),
@@ -1670,37 +1731,15 @@ server <- function(input, output, session) {
         position = "bottomleft",
         primaryLengthUnit = "meters",
         secondaryLengthUnit = "kilometers"
+      ) |>
+      setView(
+        lng = zoom_clusters$X[1],
+        lat = zoom_clusters$Y[1],
+        zoom = 16
       )
     
   })
   
-  # observeEvent(input$map_cluster, {
-  #   
-  #   data_clusters <- get_clusters()
-  #   
-  #   if(length(input$menu_cluster) == 0){
-  #     selected_cluster <- 1
-  #   }else{
-  #     selected_cluster <- input$menu_cluster
-  #   }
-  #   
-  #   clusters_hull <-
-  #     data_clusters$clusters |>
-  #     dplyr::filter(
-  #       cluster == selected_cluster
-  #     ) |>
-  #     sf::st_convex_hull() |>
-  #     sf::st_buffer(dist = 200) |>
-  #     dplyr::select(
-  #       cluster,ordervalue
-  #     )
-  #   
-  #   leafletProxy("mphot") %>% 
-  #     setView(
-  #       lng = this_shape$lng,
-  #       lat = this_shape$lat,
-  #       zoom = 8)
-  # })
   
   ###### Tables ######
   output$tab_casualties_hot <- renderTable(
@@ -2199,7 +2238,7 @@ server <- function(input, output, session) {
   ###### Maps #####
   get_map_district <- reactive({
     map_districts |>
-      filter(KOD_OKRES == input$menu_district) |>
+      filter(district_id == input$menu_district) |>
       st_geometry()
   })
   
@@ -2254,6 +2293,13 @@ server <- function(input, output, session) {
         editOptions = FALSE,
         singleFeature = TRUE
       )  |> 
+      addPolygons(
+        data = get_clusterPOLY(),
+        fillColor = "blue",
+        color = "#31a354",
+        #fillOpacity =,
+        smoothFactor = 5
+      ) |>
       addCircleMarkers(
         data = st_jitter(
           fdata, factor = 0.0002
@@ -2384,19 +2430,22 @@ server <- function(input, output, session) {
       sf::st_transform(
         crs = sf::st_crs(sf_accidents)
       )
-    
-    map_selection_vec <- 
+
+    map_selection_vec <-
       map_selection_polygon |>
       sf::st_intersection(sf_accidents,y = _) |>
       dplyr::pull(accident_id) |>
       as.character()
     
     map_selection_polygon_vec <- 
-      do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |> 
-      as.vector() |>
-      as.character()
+      # do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |> 
+      # as.character() |>
+      # as.vector()
+      map_selection_polygon |>
+      sf::st_as_sf() |>
+      geojsonsf::sf_geojson()
     
-    #session$sendCustomMessage("map_polygon", map_selection_polygon_vec)
+    session$sendCustomMessage("map_polygon", map_selection_polygon_vec)
     session$sendCustomMessage("map_selection", map_selection_vec)
     
     leafletProxy("mpacc") |>
@@ -2408,13 +2457,39 @@ server <- function(input, output, session) {
         group = "draw_selection"
       )
     
+    #write_lines(map_selection_polygon_vec, file = "aux.txt")
+    
     updateActionButton(session, "removefilter", label = "Smazat filtr")
   })
   
   observeEvent(input$removefilter,{
     leafletProxy("mpacc") %>% clearGroup("draw") %>% clearGroup("draw_selection") 
     session$sendCustomMessage("map_selection", "none")
+    session$sendCustomMessage("map_polygon", "none")
     updateActionButton(session, "removefilter", label = "Filtr není aktivní")
+  })
+  
+  get_selectedPOLY <- reactive({
+    
+    if(length(input$map_polygon) < 1){
+      out <- get_accidents_district()
+      return(out)
+    }
+    
+    out <- input$map_polygon |>
+      as.double() |>
+      matrix(ncol = 2) |>
+      as.data.frame() |> 
+      sf::st_as_sf(
+        coords = c(1,2),
+        crs = 4326
+      ) %>% 
+      sf::st_geometry() |>
+      sf::st_union() |> 
+      sf::st_cast("POLYGON")
+    
+    return(out)
+    
   })
   
   #### Reports ####

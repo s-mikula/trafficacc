@@ -29,6 +29,9 @@ library(OpenStreetMap, quietly = TRUE)
 # Path to a directory with data files
 DATA_REPOSITORY <- "poldata/"
 
+# Path to a directory with auxiliary data files (maps etc.)
+APPDATA_REPOSITORY <- "appdata/"
+
 
 #### Functions #####
 # New
