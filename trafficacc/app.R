@@ -53,6 +53,9 @@ ui <- dashboardPage(
     collapsed = FALSE
   ),
   dashboardBody(
+    tags$head(
+      # tags$style(HTML('* {font-family: "Arial"};'))
+    ),
     ##### UI: Overview #####
     tabItems(
       tabItem(tabName = "overview",
@@ -397,7 +400,7 @@ ui <- dashboardPage(
                 column(2,
                        box(
                          "Omezit na nehody v ",
-                         actionLink("cluster_zoom","oblasti poslední vybrané nehodové lokality"),
+                         actionLink("cluster_zoom","oblasti poslední vybrané nehodové lokality."),
                          materialSwitch(
                            "menu_filteraccidents_cluster",
                            "",
@@ -408,17 +411,30 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(3,
+                column(2,
                        box(
-                         p("Výběr polygonu na mapě omezuje výběr dopravních nehod na danou oblast. 
-                              Ostatní nastavené filtry zůstavájí v platnosti (AND)."),
-                         actionButton("removefilter", "Filtr není aktivní"),
-                         #title = "Výběr oblasti",
+                         "Omezit nehody výběrem polygonu na mapě.",
+                         materialSwitch(
+                           "menu_filteraccidents_polygon",
+                           "",
+                           value = FALSE,
+                           width = '100%'
+                         ),
                          status = "warning",
                          width = 12
                        )
                 ),
-                column(2,
+                # column(3,
+                #        box(
+                #          p("Výběr polygonu na mapě omezuje výběr dopravních nehod na danou oblast. 
+                #               Ostatní nastavené filtry zůstavájí v platnosti (AND)."),
+                #          actionButton("removefilter", "Filtr není aktivní"),
+                #          #title = "Výběr oblasti",
+                #          status = "warning",
+                #          width = 12
+                #        )
+                # ),
+                column(3,
                        box(
                          p("Generování HTML reportu pro velké množství nehod může trvat dlouhou dobu."),
                          downloadButton("report_accidents", "Report"),
@@ -660,6 +676,7 @@ server <- function(input, output, session) {
     #   }
     # }
     
+    if(input$menu_filteraccidents_polygon){
     if(length(input$mpacc_draw_new_feature) != 0){
       
       
@@ -675,8 +692,8 @@ server <- function(input, output, session) {
       #     crs = sf::st_crs(out)
       #   )
       
-      if(length(input$map_selection) != 0){
-      if(input$map_selection == "yes"){
+      #if(length(input$map_selection) != 0){
+      #if(input$map_selection == "yes"){
           map_selection_polygon <- 
             get_selectedPOLY() |>
             sf::st_transform(
@@ -687,8 +704,9 @@ server <- function(input, output, session) {
             st_filter(
               out,map_selection_polygon
             )
-      }
-      }
+      #}
+      #}
+    }
     }
     
     
@@ -2332,6 +2350,11 @@ server <- function(input, output, session) {
       addPolygons(
         fill = FALSE
       ) %>% 
+      addPolygons(
+        fill = FALSE,
+        layerId = "selectedPOLY",
+        data = get_selectedPOLY()
+      ) %>% 
       addLayersControl(
         baseGroups = c("Positron", "OSM (default)", "Satelite"),
         options = layersControlOptions(collapsed = TRUE),
@@ -2555,25 +2578,28 @@ server <- function(input, output, session) {
       leaflet::removeMarker("selectedPOLY") |>
       leaflet::addPolygons(
         layerId = "selectedPOLY",
-        data = get_selectedPOLY()
+        data = get_selectedPOLY(),
+        fill = FALSE
       )
     
-    session$sendCustomMessage("map_selection", "yes")
-    updateActionButton(session, "removefilter", label = "Smazat filtr")
+    #session$sendCustomMessage("map_selection", "yes")
+    #updateActionButton(session, "removefilter", label = "Smazat filtr")
   })
   
-  observeEvent(input$removefilter,{
-    leafletProxy("mpacc") |>
-      leaflet::removeMarker("selectedPOLY")
-
-    session$sendCustomMessage("map_selection", "no")
-    updateActionButton(session, "removefilter", label = "Filtr není aktivní")
-  })
+  # observeEvent(input$menu_filteraccidents_polygon,{
+  #   if(!input$menu_filteraccidents_polygon){
+  #   leafletProxy("mpacc") |>
+  #     leaflet::removeMarker("selectedPOLY")
+  #   }
+  # 
+  #   #session$sendCustomMessage("map_selection", "no")
+  #   #updateActionButton(session, "removefilter", label = "Filtr není aktivní")
+  # })
   
   get_selectedPOLY <- reactive({
     
     if(length(input$mpacc_draw_new_feature) == 0){
-      out <- get_accidents_district()
+      out <- get_map_district()
       return(out)
     }else{
       
