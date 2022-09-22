@@ -14,6 +14,8 @@ library(s2, quietly = TRUE)
 library(shiny, quietly = TRUE)
 library(shinydashboard, quietly = TRUE)
 library(shinyWidgets, quietly = TRUE)
+library(shinyalert, quietly = TRUE)
+
 library(RColorBrewer, quietly = TRUE)
 library(leaflet, quietly = TRUE)
 library(leaflet.extras, quietly = TRUE)
@@ -23,6 +25,7 @@ library(ggplot2, quietly = TRUE)
 library(rmarkdown, quietly = TRUE)
 library(OpenStreetMap, quietly = TRUE)
 #library(geojsonsf, quietly = TRUE)
+
 
 #### Constants/settings #####
 

@@ -70,57 +70,60 @@ format_integer <- function(x){
 ```
 
 ```{r, echo=FALSE, fig.align='center', fig.height=6}
-if(nrow(data_accidents) <= 200){
-
-cluster_lines <-
-  params$data_clusters$clusters %>%
-  filter(cluster == selected_cluster) %>%
-  st_geometry()
-
-# cluster_buffer <-
-#   cluster_lines %>%
-#   st_convex_hull() %>%
-#   st_buffer(100)
-
-# bg_map <- read_osm(cluster_buffer)
+# if(nrow(data_accidents) <= 200){
 # 
-# tm_shape(bg_map) +
+# cluster_lines <-
+#   params$data_clusters$clusters %>%
+#   filter(cluster == selected_cluster) %>%
+#   st_geometry()
+# 
+# # cluster_buffer <-
+# #   cluster_lines %>%
+# #   st_convex_hull() %>%
+# #   st_buffer(100)
+# 
+# # bg_map <- read_osm(cluster_buffer)
+# # 
+# # tm_shape(bg_map) +
+# #   tm_rgb() +
+# 
+# #tmap_mode("plot")
+# # tm_basemap(
+# #   leaflet::providers$Stamen.Watercolor
+# # ) +
+# 
+# 
+# read_osm(
+#   cluster_lines,
+#   ext = 1.1
+# ) %>% 
+#   tm_shape() +
 #   tm_rgb() +
+#   tm_shape(
+#     cluster_lines
+#     ) +
+#   tm_lines(
+#     col = "red",
+#     alpha = 0.6,
+#     scale = 5
+#   ) +
+#   tm_shape(data_accidents) +
+#   tm_dots(
+#     size = 1,
+#     shape = 21,
+#     jitter = 0.2,
+#     alpha = 0.3,
+#     col = "red",
+#     border.col = "black",
+#     border.alpha = 1
+#   )
+# 
+# }else{
+#   print("Ve výběru je příliš mnoho nehod pro vykreslení mapy.")
+# }
 
-#tmap_mode("plot")
-# tm_basemap(
-#   leaflet::providers$Stamen.Watercolor
-# ) +
 
-
-read_osm(
-  cluster_lines,
-  ext = 1.1
-) %>% 
-  tm_shape() +
-  tm_rgb() +
-  tm_shape(
-    cluster_lines
-    ) +
-  tm_lines(
-    col = "red",
-    alpha = 0.6,
-    scale = 5
-  ) +
-  tm_shape(data_accidents) +
-  tm_dots(
-    size = 1,
-    shape = 21,
-    jitter = 0.2,
-    alpha = 0.3,
-    col = "red",
-    border.col = "black",
-    border.alpha = 1
-  )
-
-}else{
-  print("Ve výběru je příliš mnoho nehod pro vykreslení mapy.")
-}
+print("Vykreslení mapy je dočasně vypnuto.")
 
 ```
 

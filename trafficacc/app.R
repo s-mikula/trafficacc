@@ -54,8 +54,8 @@ ui <- dashboardPage(
   ),
   dashboardBody(
     tags$head(
-      # tags$style(HTML('* {font-family: "Arial"};'))
-    ),
+      tags$link(rel = "stylesheet", type = "text/css", href = "style.css")
+      ),
     ##### UI: Overview #####
     tabItems(
       tabItem(tabName = "overview",
@@ -231,6 +231,7 @@ ui <- dashboardPage(
                            selected = PERIOD_preselected,
                            width = '100%'
                          ),
+                         actionLink("help_period_clusters","Nápověda",icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -244,6 +245,7 @@ ui <- dashboardPage(
                            selected = "default",
                            width = '100%'
                          ),
+                         actionLink("help_profile","Nápověda",icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -260,6 +262,7 @@ ui <- dashboardPage(
                            ticks = TRUE,
                            width = '100%'
                          ),
+                         actionLink("help_severity","Nápověda",icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -276,6 +279,7 @@ ui <- dashboardPage(
                            ticks = TRUE,
                            width = '100%'
                          ),
+                         actionLink("help_spill","Nápověda",icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -312,6 +316,7 @@ ui <- dashboardPage(
                    height = "250px"
                    ),
                  uiOutput("controlSorting"),
+                 actionLink("help_sorting","Nápověda",icon = icon("circle-info", lib="font-awesome")),
                  status = "warning",
                  width = 12
                ),
@@ -393,11 +398,12 @@ ui <- dashboardPage(
                            selected = "all",
                            width = '100%'
                          ),
+                         actionLink("help_filteraccidents","Nápověda",icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
                 ),
-                column(2,
+                column(3,
                        box(
                          "Omezit na nehody v ",
                          actionLink("cluster_zoom","oblasti poslední vybrané nehodové lokality."),
@@ -407,6 +413,7 @@ ui <- dashboardPage(
                            value = FALSE,
                            width = '100%'
                          ),
+                         actionLink("help_filtercluster","Nápověda",icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -420,6 +427,7 @@ ui <- dashboardPage(
                            value = FALSE,
                            width = '100%'
                          ),
+                         actionLink("help_filterpolygon","Nápověda",icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -434,7 +442,7 @@ ui <- dashboardPage(
                 #          width = 12
                 #        )
                 # ),
-                column(3,
+                column(2,
                        box(
                          p("Generování HTML reportu pro velké množství nehod může trvat dlouhou dobu."),
                          downloadButton("report_accidents", "Report"),
@@ -519,6 +527,12 @@ ui <- dashboardPage(
 
 #### Server ####
 server <- function(input, output, session) {
+  
+  ##### Help #####
+  
+  observeEvent(input$help_spill, {
+    shinyalert("Nápověda", "Parametr ovlivňuje spojování shluků dopravních nehod, které leží blízko sebe. 1 Lixel = cca 5 metrů.", type = "info")
+  })
   
   ##### Header #####
   
