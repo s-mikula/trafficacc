@@ -64,7 +64,7 @@ ui <- dashboardPage(
                        box(
                          h1(textOutput("header_title")),
                          h4(textOutput("header_period")),
-                         # h4(textOutput("header_period_p2")),
+                         h4(textOutput("header_period_p2")),
                          h4(textOutput("header_filteraccidents")),
                          width = 12
                        )
@@ -76,13 +76,14 @@ ui <- dashboardPage(
                            "Období (od/do):",
                            start = max(OPTIONS$period_start),
                            end = max(OPTIONS$period_end),
-                           min = "2011-01-01",
+                           min = MINIMUM_DATE,
                            max = max(OPTIONS$period_end),
                            format = "dd.mm.yyyy",
                            language = "cs",
                            separator = " do ",
                            width = '100%'
                          ),
+                         actionLink("help_periodovr","Nápověda",icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -195,7 +196,7 @@ ui <- dashboardPage(
                 column(6,
                        box(
                          plotOutput("fig_age"),
-                         title = "Počet nehod podle věku řidiče",
+                         title = "Počet nehod podle věku řidiče (viníka nehody)",
                          width = 12
                        )
                 ),
@@ -236,11 +237,11 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(3,
+                column(2,
                        box(
                          selectInput(
                            "menu_profile",
-                           "Prirotizace nehodových lokalit:",
+                           "Profil:",
                            MENU$profile[MENU$profile %in% OPTIONS$profile],
                            selected = "default",
                            width = '100%'
@@ -284,7 +285,7 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(2,
+                column(3,
                        box(
                          p("Generování HTML reportu pro velké množství nehod může trvat dlouhou dobu."),
                          downloadButton("report_cluster", "Report"),
@@ -378,7 +379,7 @@ ui <- dashboardPage(
                            "Období (od/do):",
                            start = max(OPTIONS$period_start),
                            end = max(OPTIONS$period_end),
-                           min = "2011-01-01",
+                           min = MINIMUM_DATE,
                            max = max(OPTIONS$period_end),
                            format = "dd.mm.yyyy",
                            language = "cs",
@@ -398,12 +399,12 @@ ui <- dashboardPage(
                            selected = "all",
                            width = '100%'
                          ),
-                         actionLink("help_filteraccidents","Nápověda",icon = icon("circle-info", lib="font-awesome")),
+                         #actionLink("help_filteraccidents","Nápověda",icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
                 ),
-                column(3,
+                column(2,
                        box(
                          "Omezit na nehody v ",
                          actionLink("cluster_zoom","oblasti poslední vybrané nehodové lokality."),
@@ -442,10 +443,11 @@ ui <- dashboardPage(
                 #          width = 12
                 #        )
                 # ),
-                column(2,
+                column(3,
                        box(
                          p("Generování HTML reportu pro velké množství nehod může trvat dlouhou dobu."),
                          downloadButton("report_accidents", "Report"),
+                         downloadButton("downloadID", "ID nehod"),
                          status = "warning",
                          width = 12
                        )
@@ -459,14 +461,21 @@ ui <- dashboardPage(
                             width = 12
                           ),
                       box(
-                            radioButtons("mpacc_legend", label = "",
+                            radioButtons("mpacc_legend", 
+                                         label = "Zbarvení dopravních nehod",
                             choices = list(
-                              "Dopravní nehody podle následků" = "nasledky", 
-                              "Druh nehody" = "druh_nehody"
+                              "Podle následků" = "nasledky", 
+                              "Podle druhu nehody" = "druh_nehody"
                             ), 
                             selected = "nasledky"),
+                            status = "warning",
                             width = 6
-                            )#,
+                            ),
+                      box(
+                        "Zelený polygon na mapě odpovídá oblasti poslední vybrané nehodové lokality",
+                        "na tabu 'Nehodové lokality'. Uživatel může pomocí mapových nástrojů nakreslit vlastní polygon, který je zobrazen modrou barvou. ",
+                        "Nehody lze podle obou polygonů filtrovat."
+                      )
                       # box(
                       #   "Vyhledání poslední vybrané nehodové lokality",
                       #   actionButton(
@@ -530,9 +539,49 @@ server <- function(input, output, session) {
   
   ##### Help #####
   
+  # help_spill
+  # help_period_clusters
+  # help_profile
+  # help_severity
+  # help_sorting
+  # help_filteraccidents
+  # help_filtercluster
+  # help_filterpolygon
+  # help_periodovr
+  
   observeEvent(input$help_spill, {
-    shinyalert("Nápověda", "Parametr ovlivňuje spojování shluků dopravních nehod, které leží blízko sebe. 1 Lixel = cca 5 metrů.", type = "info")
+    shinyalert("Nápověda", HELP$spill_text, type = "info")
   })
+  
+  observeEvent(input$help_period_clusters, {
+    shinyalert("Nápověda", HELP$period_clusters_text, type = "info")
+  })
+  
+  observeEvent(input$help_profile, {
+    shinyalert("Nápověda", HELP$profile_text, type = "info")
+  })
+  
+  observeEvent(input$help_severity, {
+    shinyalert("Nápověda", HELP$severity_text, type = "info")
+  })
+  
+  observeEvent(input$help_sorting, {
+    shinyalert("Nápověda", HELP$sorting_text, type = "info")
+  })
+  
+  observeEvent(input$help_filtercluster, {
+    shinyalert("Nápověda", HELP$filtercluster_text, type = "info")
+  })
+  
+  observeEvent(input$help_filterpolygon, {
+    shinyalert("Nápověda", HELP$filterpolygon_text, type = "info")
+  })
+  
+  observeEvent(input$help_periodovr, {
+    shinyalert("Nápověda", HELP$periodovr_text, type = "info")
+  })
+  
+  
   
   ##### Header #####
   
@@ -568,21 +617,41 @@ server <- function(input, output, session) {
   
   output$header_period_p2 <- renderText({
     # Duration of p1 in days
-    p2_length <- input$menu_period[2] - input$menu_period[1]
-    p2_length <- as.double(p2_length)
+    p1_length <- input$menu_period[2] - input$menu_period[1]
+    p1_length <- as.double(p1_length)
     
     # End date of comparison period (p2)
     p2_end <- input$menu_period[1]
     p2_end <- p2_end - 1
     
     # Start date of comparison period (p2)
-    p2_start <- p2_end - p2_length
+    p2_start <- p2_end - p1_length
     
     p2_string <- stringr::str_c(
       strftime(p2_start, format = "%d.%m.%Y"),
       " - ",
       strftime(p2_end, format = "%d.%m.%Y")
     )
+    
+    if(p2_start < MINIMUM_DATE){
+      shinyalert::shinyalert(
+        title = "Rozdílná délka základního a srovnávacího období",
+        type = "warning",
+        text = stringr::str_c("Databáze obsahuje nehody, které se staly od 1.1.2011. ",
+                              "Při vybraném základním období by srovnávací období (",
+                              p2_string,") sahalo před toto datum. Statistiky srovnávající obě období, které mají nyní různou délku, tak nebudou vypovídající."
+        )
+      )
+      
+      p2_start <- MINIMUM_DATE
+      
+      p2_string <- stringr::str_c(
+        strftime(p2_start, format = "%d.%m.%Y"),
+        " - ",
+        strftime(p2_end, format = "%d.%m.%Y")
+      )
+    }
+    
     
     stringr::str_c("Srovnávací období: ",
                    p2_string
@@ -1691,6 +1760,20 @@ server <- function(input, output, session) {
       )
   })
   
+  ###### IDs #####
+  
+  # output$downloadIDcl <- downloadHandler(
+  #   filename = "accidentsIDcl.csv",
+  #   content = function(file) {
+  #     
+  #     get_accidents_box() |>
+  #       dplyr::select(p1 = accident_id) |>
+  #       sf::st_drop_geometry() |>
+  #       readr::write_csv(file = file)
+  #     
+  #   }
+  # )
+  
   ###### Polygon #####
   
   output$downloadPOLY <- downloadHandler(
@@ -1710,7 +1793,7 @@ server <- function(input, output, session) {
         ) |>
         sf::st_geometry() |>
         sf::st_union() |>
-        sf::st_buffer(50) |>
+        sf::st_buffer(10) |>
         #geojsonsf::geojson_sf() |>
         sf::st_write(dsn = file, driver = "GeoJSON")
     }
@@ -1732,7 +1815,7 @@ server <- function(input, output, session) {
       ) |>
       sf::st_geometry() |>
       sf::st_union() |>
-      sf::st_buffer(50)
+      sf::st_buffer(10)
     
   })
   
@@ -2328,6 +2411,18 @@ server <- function(input, output, session) {
       )
   })
   
+  output$downloadID <- downloadHandler(
+    filename = "accidentsID.csv",
+    content = function(file) {
+      
+      get_accidents_box() |>
+        dplyr::select(p1 = accident_id) |>
+        sf::st_drop_geometry() |>
+        readr::write_csv(file = file)
+      
+    }
+  )
+  
   ###### Maps #####
   get_map_district <- reactive({
     map_districts |>
@@ -2348,7 +2443,9 @@ server <- function(input, output, session) {
       )
     
     #fpal <- colorFactor("Set1", domain = fdata$nasledky, levels = levels(fdata$nasledky))
-    fpal <- colorFactor("Set1", domain = fdata$nasledky, 
+    fpal <- leaflet::colorFactor("Set1", 
+                                 domain = fdata$nasledky,
+                                 ordered = TRUE,
                         levels = c(
                           "Nehoda s obětí na životech",
                           "Nehoda s těžkým zraněním",
@@ -2434,6 +2531,7 @@ server <- function(input, output, session) {
     
     #fpal <- colorFactor("Set1", domain = fdata$nasledky, levels = levels(fdata$nasledky))
     fpal <- colorFactor("Set1", domain = fdata$nasledky, 
+                        ordered = TRUE,
                         levels = c(
                           "Nehoda s obětí na životech",
                           "Nehoda s těžkým zraněním",
@@ -2480,6 +2578,7 @@ server <- function(input, output, session) {
       
     #fpal <- colorFactor("Set1", domain = fdata$druh_nehody, levels = levels(fdata$druh_nehody))
     fpal <- colorFactor("Set1", domain = fdata$druh_nehody, 
+                        ordered  = TRUE,
                         levels = crashtype_nolinebreaks)
     
     leafletProxy("mpacc") |>

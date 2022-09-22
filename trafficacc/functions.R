@@ -29,6 +29,9 @@ library(OpenStreetMap, quietly = TRUE)
 
 #### Constants/settings #####
 
+# Minimum date in the period selection
+MINIMUM_DATE <- as_date("2011-01-01")
+
 # Path to a directory with data files
 DATA_REPOSITORY <- "poldata/"
 
@@ -167,6 +170,18 @@ get_delta <- function(p1,p2){
 }
 
 #### Define variables ####
+
+HELP <- list(
+  periodovr_text = c("Umožnuje výběr základního období. Srovnávací období je automaticky nastaveno jako předcházející období o stejné délce."),
+  period_clusters_text = c("Výběr období, pro které jsou vypočítány shluky dopravních nehod. Výpočet shluků je náročný a proto je možné vybírat pouze z předem připravených možností."),
+  profile_text = c("TBD"),
+  severity_text = c("TBD"),
+  spill_text = c("Parametr ovlivňuje spojování shluků dopravních nehod, které leží blízko sebe. Shluky kterou jsou od sebe blíže, než je nastavená vzdálenost, se slijí do jednoho shluku. Vzdálenost je měřena v úsecící silnic - lixelech (1 lixel je v průměru cca 5 metrů). Vyšší hodnota parametru vede k nižšímu počtu rozsáhlejších shluků."),
+  sorting_text = c("Shluky nehod jsou řazeny podle závažnosti - číslo shluku odpovídá jeho pořadí. Kritérium závažnosti je možné zvolit v rolovacím menu. Pro bližší analýzu dopravních nehod, které se staly na místě identifikovaného shluku, je možné použít nástroje v tabu 'Dopravní nehody'. Pro analýzu v jiném software lze stáhnout geografické vymezení shluku nehod ve formátu GeoJSON."),
+  #filteraccidents_text = c(),
+  filtercluster_text = c("Omezí dopravní nehody na ty, které se staly v oblasti shluku nehod aktuálně vybraného na tabu 'Nehodové lokality'. Zahrnuté nehody v tabu 'Nehodové lokality' mohou být - i při výběru stejného období - mírně odlišné. Důvodem je odlišné přiřazování nehod ke shlukům. Na tabu 'Dopravní nehody' se používá čistě geografické vymezení shluku. Konečný výběr nehod je průnikem všech filtrů (AND)."),
+  filterpolygon_text = c("Na mapě je možné nakreslit obdélník nebo polygon. V případě zapnutí filtru se výběr omezí na nehody, které se staly uvnitř zvoleného polygonu. Konečný výběr nehod je průnikem všech filtrů (AND).")
+)
 
 MENU <- list(
   district = c(
