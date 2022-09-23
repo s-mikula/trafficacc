@@ -866,6 +866,23 @@ server <- function(input, output, session) {
       #     crs = sf::st_crs(out)
       #   )
       
+      # sfpoly_centroid <- 
+      #   get_selectedPOLY() |>
+      #   sf::st_transform(
+      #     sf::st_crs(out)
+      #   ) |>
+      #   sf::st_geometry() |>
+      #   sf::st_centroid() |>
+      #   sf::st_geometry() |>
+      #   as.vector()
+      # 
+      # leafletProxy("mpacc") |>
+      #   setView(
+      #     lng = sfpoly_centroid[1],
+      #     lat = sfpoly_centroid[2],
+      #     zoom = 16
+      #   )
+      
       #if(length(input$map_selection) != 0){
       #if(input$map_selection == "yes"){
           map_selection_polygon <- 
@@ -882,6 +899,7 @@ server <- function(input, output, session) {
       #}
     }
     }
+    
     
     
     if(input$menu_filteraccidents_cluster){
@@ -2550,6 +2568,33 @@ server <- function(input, output, session) {
       st_geometry()
   })
   
+  # get_zoom <- reactive({
+  #   out <- list()
+  #   out$zoom_view <- FALSE
+  #   out$coords <- NULL
+  #   
+  #   if(input$menu_filteraccidents_polygon){
+  #     if(length(input$mpacc_draw_new_feature) != 0){
+  #       
+  #       
+  #       out$coords <-
+  #         get_selectedPOLY() |>
+  #         # sf::st_transform(
+  #         #   sf::st_crs(out)
+  #         # ) |>
+  #         sf::st_geometry() |>
+  #         sf::st_centroid() |>
+  #         sf::st_geometry() |>
+  #         as.vector()
+  #       
+  #       out$zoom_view <- TRUE
+  #       
+  #     }
+  #   }
+  #   
+  #   return(out)
+  # })
+  
   output$mpacc <- renderLeaflet({
     
     fdata <- get_accidents() |>
@@ -2561,6 +2606,8 @@ server <- function(input, output, session) {
           TRUE ~ "Ostatní nehody"
         )
       )
+    
+    #ZOOM <- get_zoom()
     
     #fpal <- colorFactor("Set1", domain = fdata$nasledky, levels = levels(fdata$nasledky))
     fpal <- leaflet::colorFactor("Set1", 
@@ -2627,7 +2674,7 @@ server <- function(input, output, session) {
         fillColor = ~fpal(nasledky),
         fillOpacity = 0.5,
         popup = ~label
-      ) %>% 
+      ) |> 
       addLegend(
         title = "Následky nehody",
         position = "topright",
@@ -2868,6 +2915,8 @@ server <- function(input, output, session) {
         data_accidents_p1 = get_accidents_p1(),
         data_accidents_p2 = get_accidents_p2(),
         period = input$menu_period,
+        period_user = input$menu_period2_user,
+        period2 = input$menu_period2,
         accfilter = input$menu_filteraccidents
       )
 

@@ -6,6 +6,8 @@ params:
   data_accidents_p1: NA
   data_accidents_p2: NA
   period: NA
+  period_user: NA
+  period2: NA
   accfilter: NA
 ---
 
@@ -24,22 +26,40 @@ library(ggplot2, quietly = TRUE)
 ```
 
 ```{r, echo=FALSE}
+p1_start <- params$period[1]
+p1_end   <- params$period[2]
+
+if(p1_end < p1_start){
+  p1_start <- params$period[2]
+  p1_end   <- params$period[1]
+}
+
 period_p1 <- str_c(
   strftime(params$period[1], format = "%d.%m.%Y"),
   " - ",
   strftime(params$period[2], format = "%d.%m.%Y")
 )
 
-# Duration of p1 in days
-    p2_length <- params$period[2] - params$period[1]
+if(params$period_user){
+  p2_start <- params$period2[1]
+  p2_end   <- params$period2[2]
+  
+  if(p2_end < p2_start){
+    p2_start <- params$period2[2]
+    p2_end   <- params$period2[1]
+  }
+}else{
+  # Duration of p1 in days
+    p2_length <- p1_end - p1_start
     p2_length <- as.double(p2_length)
     
     # End date of comparison period (p2)
-    p2_end <- params$period[1]
+    p2_end <- p1_start
     p2_end <- p2_end - 1
     
     # Start date of comparison period (p2)
     p2_start <- p2_end - p2_length
+}
     
 period_p2 <- str_c(
   strftime(p2_start, format = "%d.%m.%Y"),

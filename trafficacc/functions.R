@@ -169,6 +169,21 @@ get_delta <- function(p1,p2){
   str_c(nch," (",chp,")")
 }
 
+conditional_view <- function(lfl, condition = FALSE, centroid = NULL, lflzoom = 16){
+  if(condition){
+    out <- lfl |>
+      setView(
+                lng = centroid[1],
+                lat = centroid[2],
+                zoom = lflzoom
+              )
+    
+    return(out)
+  }else{
+    return(lfl)
+  }
+}
+
 #### Define variables ####
 
 HELP <- list(
