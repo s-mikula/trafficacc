@@ -73,7 +73,26 @@ ui <- dashboardPage(
                        box(
                          dateRangeInput(
                            "menu_period",
-                           "Období (od/do):",
+                           "Základní období (od/do):",
+                           start = max(OPTIONS$period_start),
+                           end = max(OPTIONS$period_end),
+                           min = MINIMUM_DATE,
+                           max = max(OPTIONS$period_end),
+                           format = "dd.mm.yyyy",
+                           language = "cs",
+                           separator = " do ",
+                           width = '100%'
+                         ),
+                         materialSwitch(
+                           "menu_period2_user",
+                           "Uživatelem nastavené srovnávací období",
+                           inline = TRUE,
+                           value = FALSE,
+                           width = '100%'
+                         ),
+                         dateRangeInput(
+                           "menu_period2",
+                           label = NULL,
                            start = max(OPTIONS$period_start),
                            end = max(OPTIONS$period_end),
                            min = MINIMUM_DATE,
@@ -607,31 +626,103 @@ server <- function(input, output, session) {
     #   " - ",
     #   strftime(p2_end, format = "%d.%m.%Y")
     # )
+    p1_start <- input$menu_period[1]
+    p1_end   <- input$menu_period[2]
+    
+    if(p1_end < p1_start){
+      p1_start <- input$menu_period[2]
+      p1_end <- input$menu_period[1]
+      
+      shinyalert::shinyalert(
+        title = "Konec základního období předchází jeho začátku",
+        type = "warning",
+        text = "Specifikace období není korektní. Aplikace vyměnila začátek/konec období."
+      )
+    }
+    
     
     stringr::str_c("Základní období: ",
-                   strftime(input$menu_period[1], format = "%d.%m.%Y"),
+                   strftime(p1_start, format = "%d.%m.%Y"),
                    " - ",
-                   strftime(input$menu_period[2], format = "%d.%m.%Y")
+                   strftime(p1_end, format = "%d.%m.%Y")
     )
   })
   
   output$header_period_p2 <- renderText({
     # Duration of p1 in days
-    p1_length <- input$menu_period[2] - input$menu_period[1]
-    p1_length <- as.double(p1_length)
+    p1_start <- input$menu_period[1]
+    p1_end <- input$menu_period[2]
     
-    # End date of comparison period (p2)
-    p2_end <- input$menu_period[1]
-    p2_end <- p2_end - 1
+    if(p1_end < p1_start){
+      p1_start <- input$menu_period[2]
+      p1_end <- input$menu_period[1]
+    }
     
-    # Start date of comparison period (p2)
-    p2_start <- p2_end - p1_length
+    p1_length <- p1_end - p1_start
+    p1_length <- as.double(p1_length) |> as.integer()
+    
+    
+    if(input$menu_period2_user){
+    
+      p2_start <- input$menu_period2[1]
+      p2_end <- input$menu_period2[2]
+    
+      if(p2_end < p2_start){
+        p2_start <- input$menu_period2[2]
+        p2_end <- input$menu_period2[1]
+        
+        shinyalert::shinyalert(
+          title = "Konec srovnávacího období předchází jeho začátku",
+          type = "warning",
+          text = "Specifikace období není korektní. Aplikace vyměnila začátek/konec období."
+        )
+      }
+      
+    }else{
+      
+      # End date of comparison period (p2)
+      p2_end <- p1_start
+      p2_end <- p2_end - 1
+      
+      # Start date of comparison period (p2)
+      p2_start <- p2_end - p1_length
+      
+    }
     
     p2_string <- stringr::str_c(
       strftime(p2_start, format = "%d.%m.%Y"),
       " - ",
       strftime(p2_end, format = "%d.%m.%Y")
     )
+    
+    
+    p2_length <- p2_end - p2_start
+    p2_length <- as.double(p1_length) |> as.integer()
+    
+    if(p2_length != p1_length & input$menu_period2_user){
+      shinyalert::shinyalert(
+        title = "Rozdílná délka základního a srovnávacího období",
+        type = "warning",
+        text = "Délka základního a srovnávacího období se liší. Statistiky srovnávající obě období, které mají nyní různou délku, tak nebudou vypovídající."
+        )
+    }
+    
+    if(p2_end >= p1_start & p2_end <= p1_end){
+      shinyalert::shinyalert(
+        title = "Základní a srovnávací období se překrývají",
+        type = "warning",
+        text = "Základní a srovnávací období se překrývají. Statistiky srovnávající obě období, které mají nyní různou délku, tak nebudou vypovídající."
+      )
+    }
+    
+    if(p2_start >= p1_end){
+      shinyalert::shinyalert(
+        title = "Základní období předchází srovnávacímu období",
+        type = "warning",
+        text = "Základní období předchází srovnávacímu období. Věnujte pozornost správné interpretaci statistik, které srovnávající obě období."
+      )
+    }
+    
     
     if(p2_start < MINIMUM_DATE){
       shinyalert::shinyalert(
@@ -867,14 +958,22 @@ server <- function(input, output, session) {
   # Returns car accident from the baseline period
   get_accidents_p1 <- reactive({
     
+    p1_start <- input$menu_period[1]
+    p1_end <- input$menu_period[2]
+    
+    if(p1_end < p1_start){
+      p1_start <- input$menu_period[2]
+      p1_end <- input$menu_period[1]
+    }
+    
     out <- read_accidents(
       district = input$menu_district
     ) |>
       dplyr::filter(
-        accident_date >= input$menu_period[1]
+        accident_date >= p1_start
       ) |>
       dplyr::filter(
-        accident_date <= input$menu_period[2]
+        accident_date <= p1_end
       ) 
     
     if(input$menu_filteraccidents == "all"){
@@ -903,16 +1002,37 @@ server <- function(input, output, session) {
   # Returns car accidents from comparison period
   get_accidents_p2 <- reactive({
     
+    
+    if(input$menu_period2_user){
+      p2_start <- input$menu_period2[1]
+      p2_end <- input$menu_period2[2]
+      
+      if(p2_end < p2_start){
+        p2_start <- input$menu_period2[2]
+        p2_end <- input$menu_period2[1]
+      }
+      
+    }else{
+    
+      p1_start <- input$menu_period[1]
+      p1_end <- input$menu_period[2]
+      
+      if(p1_end < p1_start){
+        p1_start <- input$menu_period[2]
+        p1_end <- input$menu_period[1]
+      }
+      
     # Duration of p1 in days
-    p2_length <- input$menu_period[2] - input$menu_period[1]
+    p2_length <- p1_end - p1_start
     p2_length <- as.double(p2_length)
     
     # End date of comparison period (p2)
-    p2_end <- input$menu_period[1]
+    p2_end <- p1_start
     p2_end <- p2_end - 1
     
     # Start date of comparison period (p2)
     p2_start <- p2_end - p2_length
+    }
     
     
     out <- read_accidents(
