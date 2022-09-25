@@ -32,11 +32,14 @@ library(OpenStreetMap, quietly = TRUE)
 # Minimum date in the period selection
 MINIMUM_DATE <- as_date("2011-01-01")
 
-# Path to a directory with data files
-DATA_REPOSITORY <- "poldata/"
+# Path to a directory with data files on accidents
+ACCIDENTS_REPOSITORY <- "accidents/"
+
+# Path to a directory with data files on accidents
+CLUSTERS_REPOSITORY <- "clusters/"
 
 # Path to a directory with auxiliary data files (maps etc.)
-APPDATA_REPOSITORY <- "appdata/"
+APPDATA_REPOSITORY <- "districts/"
 
 
 #### Functions #####
@@ -53,13 +56,13 @@ APPDATA_REPOSITORY <- "appdata/"
 
 list_options <- function(){
   fs::dir_ls(
-    DATA_REPOSITORY
+    CLUSTERS_REPOSITORY
   ) |>
     stringr::str_subset(
-      stringr::str_c(DATA_REPOSITORY,"clusters")
+      stringr::str_c(CLUSTERS_REPOSITORY,"clusters")
     ) |>
     stringr::str_remove_all(
-      DATA_REPOSITORY
+      CLUSTERS_REPOSITORY
     ) |>
     stringr::str_remove_all(".rds") |>
     stringr::str_remove_all("clusters_") |>
@@ -98,7 +101,7 @@ list_options <- function(){
 
 read_clusters <- function(district = NULL, profile = "default", period_start = NULL, period_end = NULL){
   rdsfile <- stringr::str_c(
-    DATA_REPOSITORY,
+    CLUSTERS_REPOSITORY,
     "clusters_",
     district,"_",
     profile,"_",
@@ -123,7 +126,7 @@ read_clusters <- function(district = NULL, profile = "default", period_start = N
 
 read_accidents <- function(district = NULL){
   rdsfile <- stringr::str_c(
-    DATA_REPOSITORY,
+    ACCIDENTS_REPOSITORY,
     "accidents_",
     district,
     ".rds"

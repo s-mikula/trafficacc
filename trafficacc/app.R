@@ -278,7 +278,7 @@ ui <- dashboardPage(
                            min = 1,
                            max = 25,
                            step = 2,
-                           value = 13,
+                           value = 5,
                            ticks = TRUE,
                            width = '100%'
                          ),
@@ -294,7 +294,7 @@ ui <- dashboardPage(
                            "Dodatečný rozliv klastrů:",
                            min = 1,
                            max = 10,
-                           value = 5,
+                           value = 2,
                            step = 1,
                            ticks = TRUE,
                            width = '100%'
