@@ -74,10 +74,10 @@ ui <- dashboardPage(
                          dateRangeInput(
                            "menu_period",
                            "Základní období (od/do):",
-                           start = max(OPTIONS$period_start),
-                           end = max(OPTIONS$period_end),
+                           start = str_c(year(today())-1,"-01-01"),
+                           end = str_c(year(today())-1,"-12-31"),
                            min = MINIMUM_DATE,
-                           max = max(OPTIONS$period_end),
+                           max = str_c(year(today()),"-12-31"),
                            format = "dd.mm.yyyy",
                            language = "cs",
                            separator = " do ",
@@ -396,10 +396,10 @@ ui <- dashboardPage(
                          dateRangeInput(
                            "menu_period_accidents",
                            "Období (od/do):",
-                           start = max(OPTIONS$period_start),
-                           end = max(OPTIONS$period_end),
+                           start = str_c(year(today())-1,"-01-01"),
+                           end = str_c(year(today())-1,"-12-31"),
                            min = MINIMUM_DATE,
-                           max = max(OPTIONS$period_end),
+                           max = str_c(year(today()),"-12-31"),
                            format = "dd.mm.yyyy",
                            language = "cs",
                            separator = " do ",
@@ -425,8 +425,8 @@ ui <- dashboardPage(
                 ),
                 column(2,
                        box(
-                         "Omezit na nehody v ",
-                         actionLink("cluster_zoom","oblasti poslední vybrané nehodové lokality."),
+                         "Omezit na nehody v oblasti poslední vybrané nehodové lokality.",
+                         actionLink("cluster_zoom","Zoom",icon = icon("magnifying-glass-location", lib="font-awesome")),
                          materialSwitch(
                            "menu_filteraccidents_cluster",
                            "",
@@ -441,6 +441,7 @@ ui <- dashboardPage(
                 column(2,
                        box(
                          "Omezit nehody výběrem polygonu na mapě.",
+                         actionLink("polygon_zoom","Zoom",icon = icon("magnifying-glass-location", lib="font-awesome")),
                          materialSwitch(
                            "menu_filteraccidents_polygon",
                            "",
@@ -2571,12 +2572,12 @@ server <- function(input, output, session) {
   # get_zoom <- reactive({
   #   out <- list()
   #   out$zoom_view <- FALSE
-  #   out$coords <- NULL
-  #   
+  #   out$coords <- c(0,0)
+  # 
   #   if(input$menu_filteraccidents_polygon){
   #     if(length(input$mpacc_draw_new_feature) != 0){
-  #       
-  #       
+  # 
+  # 
   #       out$coords <-
   #         get_selectedPOLY() |>
   #         # sf::st_transform(
@@ -2584,14 +2585,14 @@ server <- function(input, output, session) {
   #         # ) |>
   #         sf::st_geometry() |>
   #         sf::st_centroid() |>
-  #         sf::st_geometry() |>
+  #         sf::st_coordinates() |>
   #         as.vector()
-  #       
+  # 
   #       out$zoom_view <- TRUE
-  #       
+  # 
   #     }
   #   }
-  #   
+  # 
   #   return(out)
   # })
   
@@ -2681,7 +2682,20 @@ server <- function(input, output, session) {
         pal = fpal,
         values = fdata$nasledky, 
         opacity = 1
-      )
+      ) #%>% 
+      # {
+      #   ifelse(
+      #     ZOOM$zoom_view,
+      #     . |>
+      #       setView(
+      #         lng = out$coords[1],
+      #         lat = out$coords[2],
+      #         zoom = 16
+      #       ),
+      #     .
+      #   )
+      # }
+      
   })
   
   observe(if(input$mpacc_legend=="nasledky"){
@@ -2797,6 +2811,34 @@ server <- function(input, output, session) {
         zoom = 16
       )
 
+  })
+  
+  observeEvent(input$polygon_zoom,{
+    
+      #if(input$menu_filteraccidents_polygon){
+        if(length(input$mpacc_draw_new_feature) != 0){
+
+
+          coords <-
+            get_selectedPOLY() |>
+            # sf::st_transform(
+            #   sf::st_crs(out)
+            # ) |>
+            sf::st_geometry() |>
+            sf::st_centroid() |>
+            sf::st_coordinates() |>
+            as.vector()
+          
+          leafletProxy("mpacc") |>
+            setView(
+              lng = coords[1],
+              lat = coords[2],
+              zoom = 16
+            )
+
+        }
+      #}
+    
   })
   
   #### Výběr polygonu na mapě

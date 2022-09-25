@@ -279,7 +279,7 @@ MENU <- list(
     "Žďár nad Sázavou" = "CZ0635"
   ),
   profile = c(
-    "Počet nehod" = "default",
+    "Výchozí" = "default",
     "Výše škod" = "other"
   ),
   filteraccidents = c("Všechny"="all",
