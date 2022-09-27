@@ -557,6 +557,22 @@ ui <- dashboardPage(
 #### Server ####
 server <- function(input, output, session) {
   
+  #### Landing screen
+  observeEvent(once = TRUE, ignoreNULL = FALSE, ignoreInit = FALSE, eventExpr = input$click, { 
+    showModal(modalDialog(
+      title = "Aplikace pro interaktivní analýzu dopravních nehod", 
+      p("Toto je ukázková verze aplikace, která byla vyvinuta pro potřeby Policie ČR v rámci projektu 'TA ČR (CK01000049): Tvorba pokročilých nástrojů pro analýzu dopravních nehod pro Policii ČR'."),
+      p("Aplikace je primárně určena pro dopravní experty, kteří dokážou údaje správně interpretovat. Ukázková verze aplikace obsahuje data pouze pro vybrané okresy ČR a využívá pouze volně dostupná data."),
+      h4("Co aplikace umí?"),
+      p("Aplikace nabízí tři pohledy na data. Na tabu 'Přehled' vidí uživatel souhrnné statistiky pro vybraný okres a období."),
+      p("Tab 'Nehodové lokality' ukazuje identifikované nehodové lokality a statistiky pro uživatelem vybranou nehodovou lokalitu (klastr). Nehodové lokality jsou identifikovány pomocí inovativní technologie, která umožňuje analýzu nehod na celé silniční síti."),
+      p("Poslední tab 'Dopravní nehody' dává uživateli největší volnost. Může pracovat se statistikami nehod z libovolného úseku dopravní sítě a libovolného období. But with a great power comes great responsibility."),
+      h4("Poznámka"),
+      p("V základním nastavení aplikace zobrazuje okres Brno-město. It's not a bug. It's a feature."),
+      footer = modalButton("Rozumím. Přejít na aplikaci.")
+    ))
+  })
+  
   ##### Help #####
   
   # help_spill
