@@ -791,6 +791,7 @@ server <- function(input, output, session) {
         label = str_c(
           "<b>ID nehody: </b>", accident_id,"<br>",
           "<b>Datum nehody: </b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
+          "<b>Druh nehody: </b>", crashtype_nolinebreaks[as.character(accident_type)],"<br>",
           "<b>Počet mrtvých: </b>", accident_dead,"<br>",
           "<b>Počet těžce zraněných: </b>", accident_serious_injury,"<br>",
           "<b>Počet lehce zraněných: </b>", accident_light_injury,"<br>",
@@ -1990,6 +1991,7 @@ server <- function(input, output, session) {
         label = str_c(
           "<b>ID nehody: </b>", accident_id,"<br>",
           "<b>Datum nehody: </b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
+          "<b>Druh nehody: </b>", crashtype_nolinebreaks[as.character(accident_type)],"<br>",
           "<b>Počet mrtvých: </b>", accident_dead,"<br>",
           "<b>Počet těžce zraněných: </b>", accident_serious_injury,"<br>",
           "<b>Počet lehce zraněných: </b>", accident_light_injury,"<br>",
