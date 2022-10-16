@@ -70,6 +70,31 @@ format_integer <- function(x){
 }
 ```
 
+```{r, echo=FALSE}
+cluster_lines <-
+  params$data_clusters$clusters %>%
+  filter(cluster == selected_cluster) %>%
+  st_geometry()
+
+cluster_centroid <-
+  cluster_lines %>%
+  st_union() %>%
+  st_convex_hull() %>%
+  st_centroid() %>% 
+  st_coordinates()
+
+mapy_centroid <- str_c(
+  "https://mapy.cz/zakladni?x=",
+  cluster_centroid[1],
+  "&y=",
+  cluster_centroid[2],
+  "&z=17"
+)
+```
+
+- Souřadnice orientačního středu shluku nehod: `r cluster_centroid[1]`, `r cluster_centroid[2]` (`r mapy_centroid`)
+
+
 ```{r, echo=FALSE, fig.align='center', fig.height=6}
 # if(nrow(data_accidents) > 0){
 # 
