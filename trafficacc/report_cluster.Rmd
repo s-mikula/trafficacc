@@ -163,7 +163,8 @@ cluster_buffer <-
   cluster_lines %>%
   st_union() %>%
   #st_convex_hull() %>%
-  st_buffer(10)
+  st_buffer(10) %>% 
+  st_transform(4326)
 
 leaflet(data = cluster_buffer) |>
       addTiles(group = "OSM (default)") |>
