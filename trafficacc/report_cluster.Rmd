@@ -27,7 +27,7 @@ library(tmap, quietly = TRUE)
 library(tmaptools, quietly = TRUE)
 # library(OpenStreetMap, quietly = TRUE)
 library(knitr, quietly = TRUE)
-library(maptiles)
+library(leaflet, quietly = TRUE)
 ```
 
 **Období:** `r params$period`
@@ -149,9 +149,38 @@ mapy_centroid <- str_c(
 # }
 
 
-print("Vykreslení mapy je dočasně vypnuto.")
+#print("Vykreslení mapy je dočasně vypnuto.")
 
 ```
+
+```{r, echo=FALSE, fig.align='center', fig.height=4}
+cluster_lines <-
+  params$data_clusters$clusters %>%
+  filter(cluster == selected_cluster) %>%
+  st_geometry()
+
+cluster_buffer <-
+  cluster_lines %>%
+  st_union() %>%
+  #st_convex_hull() %>%
+  st_buffer(10)
+
+leaflet(data = cluster_buffer) |>
+      addTiles(group = "OSM (default)") |>
+      addPolygons(
+        fill = FALSE
+      ) |>
+      addCircleMarkers(
+        data = st_jitter(
+          data_accidents, factor = 0.0002
+        ),
+        radius = 3,
+        color = "red",
+        weight = 1,
+        fillOpacity = 0.5
+      )
+```
+
 
 **Přehled nehod:**
 

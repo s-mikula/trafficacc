@@ -23,7 +23,8 @@ library(tmaptools, quietly = TRUE)
 library(tmap, quietly = TRUE)
 #library(OpenStreetMap, quietly = TRUE)
 library(knitr, quietly = TRUE)
-library(maptiles)
+library(leaflet, quietly = TRUE)
+
 ```
 
 ```{r, echo=FALSE}
@@ -104,10 +105,42 @@ format_integer <- function(x){
 #   print("Ve výběru nejsou žádné nehody.")
 # }
 
-print("Vykreslení mapy je dočasně vypnuto.")
+#print("Vykreslení mapy je dočasně vypnuto.")
 
 ```
 
+```{r, echo=FALSE, fig.align='center', fig.height=4}
+if(nrow(params$data_accidents) > 0){
+
+accidents_buffer <-
+  params$data_accidents %>%
+  st_geometry() %>%
+  st_union() %>%
+  st_buffer(10)
+
+if(as.double(st_area(accidents_buffer)) <= 10000000){
+
+leaflet(data = accidents_buffer) |>
+      addTiles(group = "OSM (default)") |>
+      addCircleMarkers(
+        data = st_jitter(
+          params$data_accidents, factor = 0.0002
+        ),
+        radius = 3,
+        color = "red",
+        weight = 1,
+        fillOpacity = 0.5
+      )
+
+}else{
+  print("Mapa se vykresluje pro výběry s plochou menší než 10 km2.")
+}
+
+}else{
+  print("Ve výběru nejsou žádné nehody.")
+}
+
+```
 
 **Přehled nehod:**
 
