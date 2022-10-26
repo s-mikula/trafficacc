@@ -27,6 +27,7 @@ library(tmap, quietly = TRUE)
 library(tmaptools, quietly = TRUE)
 # library(OpenStreetMap, quietly = TRUE)
 library(knitr, quietly = TRUE)
+library(leaflet, quietly = TRUE)
 ```
 
 **Období:** `r params$period`
@@ -69,21 +70,47 @@ format_integer <- function(x){
 }
 ```
 
+```{r, echo=FALSE}
+cluster_lines <-
+  params$data_clusters$clusters %>%
+  filter(cluster == selected_cluster) %>%
+  st_geometry()
+
+cluster_centroid <-
+  cluster_lines %>%
+  st_union() %>%
+  st_convex_hull() %>%
+  st_centroid() %>% 
+  st_coordinates()
+
+mapy_centroid <- str_c(
+  "https://mapy.cz/zakladni?x=",
+  cluster_centroid[1],
+  "&y=",
+  cluster_centroid[2],
+  "&z=17"
+)
+```
+
+- Souřadnice orientačního středu shluku nehod: `r cluster_centroid[1]`, `r cluster_centroid[2]` (`r mapy_centroid`)
+
+
 ```{r, echo=FALSE, fig.align='center', fig.height=6}
-# if(nrow(data_accidents) <= 200){
+# if(nrow(data_accidents) > 0){
 # 
 # cluster_lines <-
 #   params$data_clusters$clusters %>%
 #   filter(cluster == selected_cluster) %>%
 #   st_geometry()
 # 
-# # cluster_buffer <-
-# #   cluster_lines %>%
-# #   st_convex_hull() %>%
-# #   st_buffer(100)
+# cluster_buffer <-
+#   cluster_lines %>%
+#   st_union() %>% 
+#   st_convex_hull() %>%
+#   st_buffer(100)
 # 
 # # bg_map <- read_osm(cluster_buffer)
-# # 
+# #
 # # tm_shape(bg_map) +
 # #   tm_rgb() +
 # 
@@ -93,10 +120,9 @@ format_integer <- function(x){
 # # ) +
 # 
 # 
-# read_osm(
-#   cluster_lines,
-#   ext = 1.1
-# ) %>% 
+# get_tiles(
+#   cluster_buffer
+# ) %>%
 #   tm_shape() +
 #   tm_rgb() +
 #   tm_shape(
@@ -119,13 +145,43 @@ format_integer <- function(x){
 #   )
 # 
 # }else{
-#   print("Ve výběru je příliš mnoho nehod pro vykreslení mapy.")
+#   print("Shluk nehod neobsahuje žádné nehody")
 # }
 
 
-print("Vykreslení mapy je dočasně vypnuto.")
+#print("Vykreslení mapy je dočasně vypnuto.")
 
 ```
+
+```{r, echo=FALSE, fig.align='center', fig.height=4}
+cluster_lines <-
+  params$data_clusters$clusters %>%
+  filter(cluster == selected_cluster) %>%
+  st_geometry()
+
+cluster_buffer <-
+  cluster_lines %>%
+  st_union() %>%
+  #st_convex_hull() %>%
+  st_buffer(10) %>% 
+  st_transform(4326)
+
+leaflet(data = cluster_buffer) |>
+      addTiles(group = "OSM (default)") |>
+      addPolygons(
+        fill = FALSE
+      ) |>
+      addCircleMarkers(
+        data = st_jitter(
+          data_accidents, factor = 0.0002
+        ),
+        radius = 3,
+        color = "red",
+        weight = 1,
+        fillOpacity = 0.5
+      )
+```
+
 
 **Přehled nehod:**
 
