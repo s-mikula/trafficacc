@@ -1,5 +1,6 @@
 # Load libraries, functions, and pre-defied variables
 source("functions.R")
+source("dictionary.R")
 
 OPTIONS <- list_options()
 
@@ -26,26 +27,27 @@ map_districts <-
 #### UI ####
 ui <- dashboardPage(
   dashboardHeader(
-    title = "Analýza dopravních nehod",
+    title = TITLE$apptitle,
     titleWidth = '100%',
     disable = TRUE
   ),
   dashboardSidebar(
     sidebarMenu(
       id = "tabs",
-      menuItem("Přehled", tabName = "overview", icon = icon("satellite")),
-      menuItem("Nehodové lokality", tabName = "hotspots", icon = icon("map-location-dot")),
-      menuItem("Dopravní nehody", tabName = "accidents", icon = icon("car-burst"))
+      menuItem(TITLE$tab1, tabName = "overview", icon = icon("satellite")),
+      menuItem(TITLE$tab2, tabName = "hotspots", icon = icon("map-location-dot")),
+      menuItem(TITLE$tab3, tabName = "accidents", icon = icon("car-burst"))
     ),
     sidebarMenu(
       selectInput(
-        "menu_district", "Okres:",
+        "menu_district", TITLE$district,
         MENU$district[MENU$district %in% OPTIONS$district],
         selected = "CZ0642",
         multiple = FALSE,
         width = '100%'
       ),
-      img(src='muni-lg-white.png', align = "center", width = "100%"),br(),
+      img(src='muni-lg-cze-black.png', align = "center", width = "100%"),br(),
+      #img(src='muni-lg-white.png', align = "center", width = "100%"),br(),
       img(src='cuni.png', align = "center", width = "100%"),br(),
       img(src='Doprava.png', align = "center", width = "100%"),br()
     ),
@@ -73,19 +75,19 @@ ui <- dashboardPage(
                        box(
                          dateRangeInput(
                            "menu_period",
-                           "Základní období (od/do):",
+                           TITLE$base_period,
                            start = str_c(year(today())-1,"-01-01"),
                            end = str_c(year(today())-1,"-12-31"),
                            min = MINIMUM_DATE,
                            max = str_c(year(today()),"-12-31"),
                            format = "dd.mm.yyyy",
                            language = "cs",
-                           separator = " do ",
+                           separator = TITLE$period_separator,
                            width = '100%'
                          ),
                          materialSwitch(
                            "menu_period2_user",
-                           "Uživatelem nastavené srovnávací období",
+                           TITLE$Ccomp_period,
                            inline = TRUE,
                            value = FALSE,
                            width = '100%'
@@ -99,10 +101,10 @@ ui <- dashboardPage(
                            max = max(OPTIONS$period_end),
                            format = "dd.mm.yyyy",
                            language = "cs",
-                           separator = " do ",
+                           separator = TITLE$period_separator,
                            width = '100%'
                          ),
-                         actionLink("help_periodovr","Nápověda",icon = icon("circle-info", lib="font-awesome")),
+                         actionLink("help_periodovr",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -111,7 +113,7 @@ ui <- dashboardPage(
                        box(
                          selectInput(
                            "menu_filteraccidents",
-                           "Výběr dopravních nehod:",
+                           TITLE$acc_selection,
                            MENU$filteraccidents,
                            selected = "all",
                            width = '100%'
@@ -122,7 +124,7 @@ ui <- dashboardPage(
                 ),
                 column(2,
                        box(
-                         p("Vygeneruje tisknutelný report v HTML."),
+                         p(TITLE$report),
                          downloadButton("report_overview", "Report"),
                          status = "warning",
                          width = 12
@@ -134,7 +136,7 @@ ui <- dashboardPage(
                        box(
                          valueBoxOutput("box_acc_n", width = 12),
                          valueBoxOutput("box_acc_n_delta", width = 12),
-                         title = "Dopravních nehod",
+                         title = TITLE$box_accidents,
                          width = 12
                        )
                 ),
@@ -142,7 +144,7 @@ ui <- dashboardPage(
                        box(
                          valueBoxOutput("box_death_n", width = 12),
                          valueBoxOutput("box_death_n_delta", width = 12),
-                         title = "Usmrceno osob",
+                         title = TITLE$box_deaths,
                          width = 12
                        )
                 ),
@@ -150,7 +152,7 @@ ui <- dashboardPage(
                        box(
                          valueBoxOutput("box_swound_n", width = 12),
                          valueBoxOutput("box_swound_n_delta", width = 12),
-                         title = "Těžce zraněno osob",
+                         title = TITLE$box_swound,
                          width = 12
                        )
                 ),
@@ -158,7 +160,7 @@ ui <- dashboardPage(
                        box(
                          valueBoxOutput("box_lwound_n", width = 12),
                          valueBoxOutput("box_lwound_n_delta", width = 12),
-                         title = "Lehce zraněno osob",
+                         title = TITLE$box_lwound,
                          width = 12
                        )
                 )
@@ -167,14 +169,14 @@ ui <- dashboardPage(
                 column(6,
                        box(
                          plotOutput("fig_casualties"),
-                         title = "Oběti dopravních nehod",
+                         title = TITLE$fig_casualties,
                          width = 12
                        )
                 ),
                 column(6,
                        box(
                          plotOutput("fig_faults"),
-                         title = "Zavinění dopravních nehod",
+                         title = TITLE$fig_faults,
                          width = 12
                        )
                 )
@@ -183,14 +185,14 @@ ui <- dashboardPage(
                 column(6,
                        box(
                          plotOutput("fig_causes"),
-                         title = "Nejčastější příčiny dopravních nehod",
+                         title = TITLE$fig_causes,
                          width = 12
                        )
                 ),
                 column(6,
                        box(
                          plotOutput("fig_mosttragic"),
-                         title = "Nejtragičtější příčiny dopravních nehod",
+                         title = TITLE$fig_mosttragic,
                          width = 12
                        )
                 )
@@ -199,14 +201,14 @@ ui <- dashboardPage(
                 column(6,
                        box(
                          plotOutput("fig_crashtype"),
-                         title = "Druh srážky",
+                         title = TITLE$fig_crashtype,
                          width = 12
                        )
                 ),
                 column(6,
                        box(
                          plotOutput("fig_obstacle"),
-                         title = "Srážka s pevnou překážkou",
+                         title = TITLE$fig_obstacle,
                          width = 12
                        )
                 )
@@ -215,14 +217,14 @@ ui <- dashboardPage(
                 column(6,
                        box(
                          plotOutput("fig_age"),
-                         title = "Počet nehod podle věku řidiče (viníka nehody)",
+                         title = TITLE$fig_age,
                          width = 12
                        )
                 ),
                 column(6,
                        box(
                          plotOutput("fig_agedead"),
-                         title = "Počet zemřelých podle věku řidiče",
+                         title = TITLE$fig_agedead,
                          width = 12
                        )
                 )
@@ -246,12 +248,12 @@ ui <- dashboardPage(
                        box(
                          selectInput(
                            "menu_period_hotspots",
-                           "Období:",
+                           TITLE$base_period_fixed,
                            unique(OPTIONS$period_menu),
                            selected = PERIOD_preselected,
                            width = '100%'
                          ),
-                         actionLink("help_period_clusters","Nápověda",icon = icon("circle-info", lib="font-awesome")),
+                         actionLink("help_period_clusters",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -260,12 +262,12 @@ ui <- dashboardPage(
                        box(
                          selectInput(
                            "menu_profile",
-                           "Profil:",
+                           TITLE$menu_profile,
                            MENU$profile[MENU$profile %in% OPTIONS$profile],
                            selected = "default",
                            width = '100%'
                          ),
-                         actionLink("help_profile","Nápověda",icon = icon("circle-info", lib="font-awesome")),
+                         actionLink("help_profile",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -274,7 +276,7 @@ ui <- dashboardPage(
                        box(
                          sliderInput(
                            "menu_quantile",
-                           "Promile nejhorších úseků:",
+                           TITLE$menu_quantile,
                            min = 1,
                            max = 25,
                            step = 2,
@@ -282,7 +284,7 @@ ui <- dashboardPage(
                            ticks = TRUE,
                            width = '100%'
                          ),
-                         actionLink("help_severity","Nápověda",icon = icon("circle-info", lib="font-awesome")),
+                         actionLink("help_severity",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -291,7 +293,7 @@ ui <- dashboardPage(
                        box(
                          sliderInput(
                            "menu_spill",
-                           "Dodatečný rozliv klastrů:",
+                           TITLE$menu_spill,
                            min = 1,
                            max = 10,
                            value = 2,
@@ -299,14 +301,14 @@ ui <- dashboardPage(
                            ticks = TRUE,
                            width = '100%'
                          ),
-                         actionLink("help_spill","Nápověda",icon = icon("circle-info", lib="font-awesome")),
+                         actionLink("help_spill",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
                 ),
                 column(3,
                        box(
-                         p("Generování HTML reportu pro velké množství nehod může trvat dlouhou dobu."),
+                         p(TITLE$note_report),
                          downloadButton("report_cluster", "Report"),
                          downloadButton("downloadPOLY", "GeoJSON"),
                          status = "warning",
@@ -318,7 +320,7 @@ ui <- dashboardPage(
         column(6,
                box(
                leafletOutput("mphot", height = 900),
-               title = "Mapa shluků dopravních nehod",
+               title = TITLE$mphot,
                width = 12
                )
                ),
@@ -326,7 +328,7 @@ ui <- dashboardPage(
                box(
                  selectInput(
                    "menu_sorting",
-                   "Řazení klastrů",
+                   TITLE$menu_sorting,
                    choices = MENU$sorting,
                    selected = "costs",
                    width = '100%'
@@ -336,7 +338,7 @@ ui <- dashboardPage(
                    height = "250px"
                    ),
                  uiOutput("controlSorting"),
-                 actionLink("help_sorting","Nápověda",icon = icon("circle-info", lib="font-awesome")),
+                 actionLink("help_sorting",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
                  status = "warning",
                  width = 12
                ),
@@ -346,27 +348,27 @@ ui <- dashboardPage(
                valueBoxOutput("box_lwound_n_hot", width = 3),
                box(
                  tableOutput("tab_casualties_hot"), 
-                 title = "Oběti dopravních nehod",
+                 title = TITLE$fig_casualties,
                  width = 12
                ),
                box(
                  tableOutput("tab_fault_hot"), #tab_causes_accidents
-                 title = "Nehody podle zavinění",
+                 title = TITLE$fig_faults,
                  width = 12
                ),
                box(
                  tableOutput("tab_causes_hot"), #tab_type_accidents
-                 title = "Nehody podle příčin",
+                 title = TITLE$fig_causes,
                  width = 12
                ),
                box(
                  tableOutput("tab_type_hot"), #tab_type_accidents
-                 title = "Nehody podle příčin",
+                 title = TITLE$fig_crashtype,
                  width = 12
                ),
                box(
                  plotOutput("fig_age_hot"),
-                 title = "Počet nehod podle věku řidiče",
+                 title = TITLE$fig_age,
                  width = 12
                )
         )
@@ -395,7 +397,7 @@ ui <- dashboardPage(
                        box(
                          dateRangeInput(
                            "menu_period_accidents",
-                           "Období (od/do):",
+                           TITLE$base_period_fixed,
                            start = str_c(year(today())-1,"-01-01"),
                            end = str_c(year(today())-1,"-12-31"),
                            min = MINIMUM_DATE,
@@ -413,7 +415,7 @@ ui <- dashboardPage(
                        box(
                          selectInput(
                            "menu_filteraccidents_accidents",
-                           "Výběr dopravních nehod:",
+                           TITLE$acc_selection,
                            MENU$filteraccidents,
                            selected = "all",
                            width = '100%'
@@ -425,7 +427,7 @@ ui <- dashboardPage(
                 ),
                 column(2,
                        box(
-                         "Omezit na nehody v oblasti poslední vybrané nehodové lokality.",
+                         TITLE$filter_cluster,
                          actionLink("cluster_zoom","Zoom",icon = icon("magnifying-glass-location", lib="font-awesome")),
                          materialSwitch(
                            "menu_filteraccidents_cluster",
@@ -440,7 +442,7 @@ ui <- dashboardPage(
                 ),
                 column(2,
                        box(
-                         "Omezit nehody výběrem polygonu na mapě.",
+                         TITLE$filter_polygon,
                          actionLink("polygon_zoom","Zoom",icon = icon("magnifying-glass-location", lib="font-awesome")),
                          materialSwitch(
                            "menu_filteraccidents_polygon",
@@ -453,19 +455,9 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                # column(3,
-                #        box(
-                #          p("Výběr polygonu na mapě omezuje výběr dopravních nehod na danou oblast. 
-                #               Ostatní nastavené filtry zůstavájí v platnosti (AND)."),
-                #          actionButton("removefilter", "Filtr není aktivní"),
-                #          #title = "Výběr oblasti",
-                #          status = "warning",
-                #          width = 12
-                #        )
-                # ),
                 column(3,
                        box(
-                         p("Generování HTML reportu pro velké množství nehod může trvat dlouhou dobu."),
+                         p(TITLE$note_report),
                          downloadButton("report_accidents", "Report"),
                          downloadButton("downloadID", "ID nehod"),
                          status = "warning",
@@ -477,7 +469,7 @@ ui <- dashboardPage(
                 column(7,
                        box(
                             leafletOutput("mpacc", height = 900),
-                            title = "Mapa dopravních nehod",
+                            title = TITLE$mpacc,
                             width = 12
                           ),
                       box(
