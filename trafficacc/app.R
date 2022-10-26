@@ -15,14 +15,6 @@ map_districts <-
   ) %>% 
   sf::st_transform(4326)
 
-# JavaScript, který se používá pro zjištění velikosti obrazovky uživatele
-# jscode <- '
-#   $(document).on("shiny:connected", function(e) {
-#   var jsHeight = window.innerHeight;
-#   Shiny.onInputChange("GetScreenHeight",jsHeight);
-#   });
-#   '
-
 # Define UI for application that draws a histogram
 #### UI ####
 ui <- dashboardPage(
@@ -474,11 +466,11 @@ ui <- dashboardPage(
                           ),
                       box(
                             radioButtons("mpacc_legend", 
-                                         label = "Zbarvení dopravních nehod",
+                                         label = TITLE$mpacc_label,
                             choices = list(
                               "Podle následků" = "nasledky", 
                               "Podle druhu nehody" = "druh_nehody"
-                            ), 
+                            ),
                             selected = "nasledky"),
                             status = "warning",
                             width = 6
@@ -488,13 +480,6 @@ ui <- dashboardPage(
                         "na tabu 'Nehodové lokality'. Uživatel může pomocí mapových nástrojů nakreslit vlastní polygon, který je zobrazen modrou barvou. ",
                         "Nehody lze podle obou polygonů filtrovat."
                       )
-                      # box(
-                      #   "Vyhledání poslední vybrané nehodové lokality",
-                      #   actionButton(
-                      #     "cluster_zoom", 
-                      #     label = "Zoom"),
-                      #   width = 6
-                      # )
                         ),
               column(5,
                         valueBoxOutput("box_acc_n_box", width = 3),
@@ -503,27 +488,27 @@ ui <- dashboardPage(
                         valueBoxOutput("box_lwound_n_box", width = 3),
                      box(
                        tableOutput("tab_casualties_accidents"), 
-                       title = "Oběti dopravních nehod",
+                       title = TITLE$fig_casualties,
                        width = 12
                      ),
                      box(
                        tableOutput("tab_fault_accidents"), #tab_causes_accidents
-                       title = "Nehody podle zavinění",
+                       title = TITLE$fig_faults,
                        width = 12
                      ),
                      box(
                        tableOutput("tab_causes_accidents"), #tab_type_accidents
-                       title = "Nehody podle příčin",
+                       title = TITLE$fig_causes,
                        width = 12
                      ),
                      box(
                        tableOutput("tab_type_accidents"), #tab_type_accidents
-                       title = "Nehody podle příčin",
+                       title = TITLE$fig_crashtype,
                        width = 12
                      ),
                      box(
                        plotOutput("fig_age_box"),
-                       title = "Počet nehod podle věku řidiče",
+                       title = TITLE$fig_age,
                        width = 12
                      )
               )
@@ -578,35 +563,35 @@ server <- function(input, output, session) {
   # help_periodovr
   
   observeEvent(input$help_spill, {
-    shinyalert("Nápověda", HELP$spill_text, type = "info")
+    shinyalert(TITLE$help, HELP$spill_text, type = "info")
   })
   
   observeEvent(input$help_period_clusters, {
-    shinyalert("Nápověda", HELP$period_clusters_text, type = "info")
+    shinyalert(TITLE$help, HELP$period_clusters_text, type = "info")
   })
   
   observeEvent(input$help_profile, {
-    shinyalert("Nápověda", HELP$profile_text, type = "info")
+    shinyalert(TITLE$help, HELP$profile_text, type = "info")
   })
   
   observeEvent(input$help_severity, {
-    shinyalert("Nápověda", HELP$severity_text, type = "info")
+    shinyalert(TITLE$help, HELP$severity_text, type = "info")
   })
   
   observeEvent(input$help_sorting, {
-    shinyalert("Nápověda", HELP$sorting_text, type = "info")
+    shinyalert(TITLE$help, HELP$sorting_text, type = "info")
   })
   
   observeEvent(input$help_filtercluster, {
-    shinyalert("Nápověda", HELP$filtercluster_text, type = "info")
+    shinyalert(TITLE$help, HELP$filtercluster_text, type = "info")
   })
   
   observeEvent(input$help_filterpolygon, {
-    shinyalert("Nápověda", HELP$filterpolygon_text, type = "info")
+    shinyalert(TITLE$help, HELP$filterpolygon_text, type = "info")
   })
   
   observeEvent(input$help_periodovr, {
-    shinyalert("Nápověda", HELP$periodovr_text, type = "info")
+    shinyalert(TITLE$help, HELP$periodovr_text, type = "info")
   })
   
   
@@ -614,7 +599,7 @@ server <- function(input, output, session) {
   ##### Header #####
   
   output$header_title <- renderText({
-    stringr::str_c("Nehody v okrese ",
+    stringr::str_c(TITLE$header_title,
                    names(MENU$district)[MENU$district == input$menu_district])
   })
   
@@ -863,38 +848,6 @@ server <- function(input, output, session) {
     if(input$menu_filteraccidents_polygon){
     if(length(input$mpacc_draw_new_feature) != 0){
       
-      
-      # polygon_coordinates <- input$mpacc_draw_new_feature$geometry$coordinates[[1]]
-      # 
-      # map_selection_polygon <- 
-      #   do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |>
-      #   sf::st_multipoint() |>
-      #   sf::st_cast("POLYGON") |>
-      #   sf::st_sfc() |>
-      #   sf::st_set_crs(4326) |>
-      #   sf::st_transform(
-      #     crs = sf::st_crs(out)
-      #   )
-      
-      # sfpoly_centroid <- 
-      #   get_selectedPOLY() |>
-      #   sf::st_transform(
-      #     sf::st_crs(out)
-      #   ) |>
-      #   sf::st_geometry() |>
-      #   sf::st_centroid() |>
-      #   sf::st_geometry() |>
-      #   as.vector()
-      # 
-      # leafletProxy("mpacc") |>
-      #   setView(
-      #     lng = sfpoly_centroid[1],
-      #     lat = sfpoly_centroid[2],
-      #     zoom = 16
-      #   )
-      
-      #if(length(input$map_selection) != 0){
-      #if(input$map_selection == "yes"){
           map_selection_polygon <- 
             get_selectedPOLY() |>
             sf::st_transform(
@@ -919,46 +872,6 @@ server <- function(input, output, session) {
           y = get_clusterPOLY()
           )
     }
-    
-    # if(length(input$map_polygon) > 1){
-    #   map_selection <- 
-    #     input$map_polygon |>
-    #     as.double() |>
-    #     matrix(ncol = 2) |>
-    #     as.data.frame() |> 
-    #     sf::st_as_sf(
-    #       coords = c(1,2),
-    #       crs = 4326
-    #     ) %>% 
-    #     sf::st_geometry() |>
-    #     sf::st_union() |> 
-    #     sf::st_cast("POLYGON") |>
-    #     sf::st_transform(
-    #       crs = sf::st_crs(out)
-    #     )
-    # }else{
-    #   map_selection <- 
-    #     get_accidents_district() |>
-    #     sf::st_transform(
-    #       crs = sf::st_crs(out)
-    #     )
-    # }
-    
-    
-      #if(input$map_polygon[1] != "none"){
-
-        # out <- 
-        #   sf::st_filter(
-        #     x = out,
-        #     y = get_selectedPOLY()
-        #     )
-
-        # out <- out |>
-        #   sf::st_filter(selected_polygon)
-        #   # sf::st_intersection(
-        #   #   out, selected_polygon
-        #   # )
-      #}
     
     if(input$menu_filteraccidents_accidents == "all"){
       return(out)
@@ -1700,12 +1613,6 @@ server <- function(input, output, session) {
     maxN <- get_clusters()
     
     tagList(
-      # selectInput("menu_cluster", 
-      #             "Výběr klastru dopravních nehod", 
-      #             choices = 1:maxN$N, 
-      #             selected = 1,
-      #             width = '100%'
-      #             )
       sliderInput("menu_cluster", 
                   "Výběr klastru dopravních nehod", 
                   min = 1,
@@ -1908,20 +1815,6 @@ server <- function(input, output, session) {
       )
   })
   
-  ###### IDs #####
-  
-  # output$downloadIDcl <- downloadHandler(
-  #   filename = "accidentsIDcl.csv",
-  #   content = function(file) {
-  #     
-  #     get_accidents_box() |>
-  #       dplyr::select(p1 = accident_id) |>
-  #       sf::st_drop_geometry() |>
-  #       readr::write_csv(file = file)
-  #     
-  #   }
-  # )
-  
   ###### Polygon #####
   
   output$downloadPOLY <- downloadHandler(
@@ -1966,8 +1859,6 @@ server <- function(input, output, session) {
       sf::st_buffer(10)
     
   })
-  
-  #session$sendCustomMessage("map_polygon", map_selection_polygon_vec)
   
   ###### Maps ######
   
@@ -2579,33 +2470,6 @@ server <- function(input, output, session) {
       st_geometry()
   })
   
-  # get_zoom <- reactive({
-  #   out <- list()
-  #   out$zoom_view <- FALSE
-  #   out$coords <- c(0,0)
-  # 
-  #   if(input$menu_filteraccidents_polygon){
-  #     if(length(input$mpacc_draw_new_feature) != 0){
-  # 
-  # 
-  #       out$coords <-
-  #         get_selectedPOLY() |>
-  #         # sf::st_transform(
-  #         #   sf::st_crs(out)
-  #         # ) |>
-  #         sf::st_geometry() |>
-  #         sf::st_centroid() |>
-  #         sf::st_coordinates() |>
-  #         as.vector()
-  # 
-  #       out$zoom_view <- TRUE
-  # 
-  #     }
-  #   }
-  # 
-  #   return(out)
-  # })
-  
   output$mpacc <- renderLeaflet({
     
     fdata <- get_accidents() |>
@@ -2692,19 +2556,7 @@ server <- function(input, output, session) {
         pal = fpal,
         values = fdata$nasledky, 
         opacity = 1
-      ) #%>% 
-      # {
-      #   ifelse(
-      #     ZOOM$zoom_view,
-      #     . |>
-      #       setView(
-      #         lng = out$coords[1],
-      #         lat = out$coords[2],
-      #         zoom = 16
-      #       ),
-      #     .
-      #   )
-      # }
+      ) 
       
   })
   
@@ -2720,7 +2572,7 @@ server <- function(input, output, session) {
         )
       )
     
-    #fpal <- colorFactor("Set1", domain = fdata$nasledky, levels = levels(fdata$nasledky))
+
     fpal <- colorFactor("Set1", domain = fdata$nasledky, 
                         ordered = TRUE,
                         levels = c(
@@ -2853,57 +2705,6 @@ server <- function(input, output, session) {
   
   #### Výběr polygonu na mapě
   
-  # # https://redoakstrategic.com/geoshaper/
-  # observeEvent(input$mpacc_draw_new_feature,{
-  #   polygon_coordinates <- input$mpacc_draw_new_feature$geometry$coordinates[[1]]
-  #   
-  #   
-  #   # Accidents
-  #   sf_accidents <- get_accidents()
-  #   
-  #   
-  #   # Create sf polygon
-  #   map_selection_polygon <- 
-  #     do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |>
-  #     sf::st_multipoint() |>
-  #     sf::st_cast("POLYGON") |>
-  #     sf::st_sfc() |>
-  #     sf::st_set_crs(4326) |>
-  #     sf::st_transform(
-  #       crs = sf::st_crs(sf_accidents)
-  #     )
-  # 
-  #   map_selection_vec <-
-  #     map_selection_polygon |>
-  #     sf::st_intersection(sf_accidents,y = _) |>
-  #     dplyr::pull(accident_id) |>
-  #     as.character()
-  #   
-  #   map_selection_polygon_vec <- 
-  #     # do.call(rbind,lapply(polygon_coordinates,function(x){c(x[[1]][1],x[[2]][1])})) |> 
-  #     # as.character() |>
-  #     # as.vector()
-  #     map_selection_polygon |>
-  #     sf::st_as_sf() |>
-  #     geojsonsf::sf_geojson()
-  #   
-  #   session$sendCustomMessage("map_polygon", map_selection_polygon_vec)
-  #   session$sendCustomMessage("map_selection", map_selection_vec)
-  #   
-  #   leafletProxy("mpacc") |>
-  #     clearGroup("draw_selection") |> 
-  #     clearGroup("draw") |>
-  #     addPolygons(
-  #       data = map_selection_polygon,
-  #       color = "#ff0066",
-  #       group = "draw_selection"
-  #     )
-  #   
-  #   #write_lines(map_selection_polygon_vec, file = "aux.txt")
-  #   
-  #   updateActionButton(session, "removefilter", label = "Smazat filtr")
-  # })
-  
   observeEvent(input$mpacc_draw_new_feature,{
     
     leafletProxy("mpacc") |>
@@ -2914,19 +2715,8 @@ server <- function(input, output, session) {
         fill = FALSE
       )
     
-    #session$sendCustomMessage("map_selection", "yes")
-    #updateActionButton(session, "removefilter", label = "Smazat filtr")
   })
   
-  # observeEvent(input$menu_filteraccidents_polygon,{
-  #   if(!input$menu_filteraccidents_polygon){
-  #   leafletProxy("mpacc") |>
-  #     leaflet::removeMarker("selectedPOLY")
-  #   }
-  # 
-  #   #session$sendCustomMessage("map_selection", "no")
-  #   #updateActionButton(session, "removefilter", label = "Filtr není aktivní")
-  # })
   
   get_selectedPOLY <- reactive({
     

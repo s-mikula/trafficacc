@@ -2,6 +2,7 @@
 
 TITLE <- list(
   apptitle = "Analýza dopravních nehod",
+  header_title = "Nehody v okrese ",
   tab1 = "Přehled",
   tab2 = "Nehodové lokality",
   tab3 = "Dopravní nehody",
@@ -33,7 +34,12 @@ TITLE <- list(
   menu_sorting = "Řazení shluků nehod",
   filter_cluster = "Omezit na nehody v oblasti poslední vybrané nehodové lokality.",
   filter_polygon = "Omezit nehody výběrem polygonu na mapě.",
-  mpacc = "Mapa dopravních nehod"
+  mpacc = "Mapa dopravních nehod",
+  mpacc_label = "Zbarvení dopravních nehod",
+  mpacc_choices = list(
+    "Podle následků" = "nasledky", 
+    "Podle druhu nehody" = "druh_nehody"
+  )
 )
 
 HELP <- list(
