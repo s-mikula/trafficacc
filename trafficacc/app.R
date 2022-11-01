@@ -767,7 +767,7 @@ server <- function(input, output, session) {
           "<b>",ACCCHAR$date,"</b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
           "<b>",ACCCHAR$type,"</b>", crashtype_nolinebreaks[as.character(accident_type)],"<br>",
           "<b>",ACCCHAR$dead,"</b>", accident_dead,"<br>",
-          "<b>",ACCCHAR$swound,"/b>", accident_serious_injury,"<br>",
+          "<b>",ACCCHAR$swound,"</b>", accident_serious_injury,"<br>",
           "<b>",ACCCHAR$lwound,"</b>", accident_light_injury,"<br>",
           "<b>",ACCCHAR$damage,"</b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
         )
@@ -810,7 +810,7 @@ server <- function(input, output, session) {
           "<b>",ACCCHAR$date,"</b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
           "<b>",ACCCHAR$type,"</b>", crashtype_nolinebreaks[as.character(accident_type)],"<br>",
           "<b>",ACCCHAR$dead,"</b>", accident_dead,"<br>",
-          "<b>",ACCCHAR$swound,"/b>", accident_serious_injury,"<br>",
+          "<b>",ACCCHAR$swound,"</b>", accident_serious_injury,"<br>",
           "<b>",ACCCHAR$lwound,"</b>", accident_light_injury,"<br>",
           "<b>",ACCCHAR$damage,"</b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
         )
@@ -1955,7 +1955,7 @@ server <- function(input, output, session) {
           "<b>",ACCCHAR$date,"</b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
           "<b>",ACCCHAR$type,"</b>", crashtype_nolinebreaks[as.character(accident_type)],"<br>",
           "<b>",ACCCHAR$dead,"</b>", accident_dead,"<br>",
-          "<b>",ACCCHAR$swound,"/b>", accident_serious_injury,"<br>",
+          "<b>",ACCCHAR$swound,"</b>", accident_serious_injury,"<br>",
           "<b>",ACCCHAR$lwound,"</b>", accident_light_injury,"<br>",
           "<b>",ACCCHAR$damage,"</b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
         )
