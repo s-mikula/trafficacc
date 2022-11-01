@@ -54,35 +54,82 @@ APPDATA_REPOSITORY <- "districts/"
 # Output: Tibble with columns district, profile, period_start, period_end
 #
 
+# list_options <- function(){
+#   fs::dir_ls(
+#     CLUSTERS_REPOSITORY
+#   ) |>
+#     stringr::str_subset(
+#       stringr::str_c(CLUSTERS_REPOSITORY,"clusters")
+#     ) |>
+#     stringr::str_remove_all(
+#       CLUSTERS_REPOSITORY
+#     ) |>
+#     stringr::str_remove_all(".rds") |>
+#     stringr::str_remove_all("clusters_") |>
+#     tibble::tibble(
+#       file = _
+#     ) |>
+#     tidyr::separate(
+#       file, 
+#       c("district","profile","period_start","period_end"),
+#       sep = "_"
+#     ) %>% 
+#     dplyr::mutate(
+#       period_start = lubridate::as_date(period_start),
+#       period_end = lubridate::as_date(period_end),
+#       period_menu = stringr::str_c(
+#         base::strftime(period_start, "%d.%m.%Y"),
+#         " - ",
+#         base::strftime(period_end, "%d.%m.%Y")
+#       )
+#     )
+# }
+
 list_options <- function(){
-  fs::dir_ls(
-    CLUSTERS_REPOSITORY
-  ) |>
-    stringr::str_subset(
-      stringr::str_c(CLUSTERS_REPOSITORY,"clusters")
-    ) |>
-    stringr::str_remove_all(
-      CLUSTERS_REPOSITORY
-    ) |>
-    stringr::str_remove_all(".rds") |>
-    stringr::str_remove_all("clusters_") |>
-    tibble::tibble(
-      file = _
-    ) |>
-    tidyr::separate(
-      file, 
-      c("district","profile","period_start","period_end"),
-      sep = "_"
+  clusters_available <- fs::dir_ls(CLUSTERS_REPOSITORY, 
+                                   regexp="sidecar") |>
+    purrr::map_dfr(read_rds) |>
+    filter(
+      fs::file_exists(
+        stringr::str_c(CLUSTERS_REPOSITORY,file_name)
+      )
     ) %>% 
+    rowwise() %>% 
     dplyr::mutate(
-      period_start = lubridate::as_date(period_start),
-      period_end = lubridate::as_date(period_end),
+      hash_control = openssl::md5(file(file.path(
+        stringr::str_remove(CLUSTERS_REPOSITORY,"/"),
+        file_name
+        ))) %>% list()
+    ) |> 
+    dplyr::ungroup() |> 
+    dplyr::mutate(
+      hash = hash |> map_chr(as.character),
+      hash_control = hash_control |> map_chr(as.character)
+    ) |>
+    dplyr::filter(
+      hash == hash_control
+    )
+  
+  clusters_available |> 
+    dplyr::select(
+      district = district_id,
+      profile = PROFILE_NAME,
+      period_start = from_date,
+      period_end = to_date,
+      PROFILE_COMMENT
+    ) |>
+    rowwise() |>
+    dplyr::mutate(
       period_menu = stringr::str_c(
         base::strftime(period_start, "%d.%m.%Y"),
         " - ",
-        base::strftime(period_end, "%d.%m.%Y")
+        base::strftime(period_end, "%d.%m.%Y"),
+        " (",
+        PROFILE_COMMENT,
+        ")"
       )
-    )
+    ) |>
+    ungroup()
 }
 
 #
@@ -99,7 +146,7 @@ list_options <- function(){
 # Note: The function is design to work with parameters delivered by list_options()
 # 
 
-read_clusters <- function(district = NULL, profile = "default", period_start = NULL, period_end = NULL){
+read_clusters <- function(district = NULL, profile = "cost", period_start = NULL, period_end = NULL){
   rdsfile <- stringr::str_c(
     CLUSTERS_REPOSITORY,
     "clusters_",
@@ -108,6 +155,20 @@ read_clusters <- function(district = NULL, profile = "default", period_start = N
     as.character(period_start),"_",
     as.character(period_end),
     ".rds"
+  )
+  
+  read_rds(rdsfile)
+}
+
+read_sidecar <- function(district = NULL, profile = "cost", period_start = NULL, period_end = NULL){
+  rdsfile <- stringr::str_c(
+    CLUSTERS_REPOSITORY,
+    "clusters_",
+    district,"_",
+    profile,"_",
+    as.character(period_start),"_",
+    as.character(period_end),
+    "_sidecar.rds"
   )
   
   read_rds(rdsfile)

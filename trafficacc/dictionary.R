@@ -3,13 +3,15 @@
 TITLE <- list(
   apptitle = "Analýza dopravních nehod",
   header_title = "Nehody v okrese ",
-  tab1 = "Přehled",
-  tab2 = "Nehodové lokality",
+  tab1 = "Přehled za okres",
+  tab2 = "Shluky nehod",
   tab3 = "Dopravní nehody",
   district = "Okres:",
   base_period_fixed = "Období (od/do):",
+  base_periodprofile_fixed = "Období (od/do) a profil:",
   base_period = "Základní období (od/do):",
   comp_period = "Uživatelem nastavené srovnávací období",
+  comp_period_set = "Srovnávací období: ",
   period_separator = " do ",
   help = "Nápověda",
   acc_selection = "Výběr dopravních nehod:",
@@ -30,6 +32,7 @@ TITLE <- list(
   menu_quantile = "Promile nejhorších úseků:",
   menu_spill = "Dodatečný rozliv klastrů:",
   note_report = "Generování HTML reportu pro velké množství nehod může trvat dlouhou dobu.",
+  menu_cluster = "Výběr klastru dopravních nehod",
   mphot = "Mapa shluků dopravních nehod",
   menu_sorting = "Řazení shluků nehod",
   filter_cluster = "Omezit na nehody v oblasti poslední vybrané nehodové lokality.",
@@ -39,7 +42,9 @@ TITLE <- list(
   mpacc_choices = list(
     "Podle následků" = "nasledky", 
     "Podle druhu nehody" = "druh_nehody"
-  )
+  ),
+  profiledesc = "Nastavení profilu a výpočtu shluků nehod",
+  filteracc = "Dopravní nehody ve výběru: "
 )
 
 HELP <- list(
@@ -135,8 +140,8 @@ MENU <- list(
     "Žďár nad Sázavou" = "CZ0635"
   ),
   profile = c(
-    "Výchozí" = "default",
-    "Výše škod" = "other"
+    "Rovné vážení" = "equal",
+    "Výše škod" = "cost"
   ),
   filteraccidents = c("Všechny"="all",
                       "S účastí chodce"="pedestrian",
@@ -368,3 +373,90 @@ obstacletype <- c(
   "9" = "jiná překážka - plot,\nnásep, nástupní ostrůvek",
   "0" = "nepřichází v úvahu,\nnejde o srážku s pev.přek."
 )
+
+PROFILEDESC <- list(
+  PROFILE_COMMENT = "",
+  NKDE_METHOD = "",
+  UNIT_COST_CONST = "",
+  UNIT_COST_DEAD = "",
+  UNIT_COST_SERIOUS_INJURY = "",
+  UNIT_COST_LIGHT_INJURY = "",
+  UNIT_COST_MATERIAL = "",
+  UNIT_COST_SERIOUS_INJURY = "",
+  ACCIDENT_TO_ROAD_MAX_DISTANCE = "",
+  DISTRICT_BUFFER_SIZE = "",
+  LIXEL_SIZE = "",
+  LIXEL_MIN_DIST = "",
+  NKDE_BW = "",
+  SUPPORTED_ROAD_CLASSES = "",
+  NKDE_WEIGHTS = "",
+  NKDE_AGG = "",
+  NKDE_ADAPTIVE = "",
+  NKDE_TRIM_BW = ""
+)
+
+AUTHORS <- list(
+    line1 = "Vývoj webové aplikace a software na identifikaci klastrů nehod na silniční síti byl podpořen grantem TA ČR (CK01000049): ",
+    line2 = "Tvorba pokročilých nástrojů pro analýzu dopravních nehod pro Policii ČR",
+    line3 = "Autoři: Michal Kvasnička (michal.kvasnicka@econ.muni.cz) & Štěpán Mikula (stepan.mikula@econ.muni.cz)"
+)
+
+ALERT <- list(
+  noacc = "Ve výběru nejsou žádné smrtelné nehody.",
+  noacc_cause = "Ve výběru nejsou žádné nehody se známou příčinou.",
+  noacc_fault = "Ve výběru nejsou žádné zaviněné nehody.",
+  title1 = "Konec základního období předchází jeho začátku",
+  text1 = "Specifikace období není korektní. Aplikace vyměnila začátek/konec období.",
+  title2 = "Rozdílná délka základního a srovnávacího období",
+  text2_1 = "Délka základního a srovnávacího období se liší. Statistiky srovnávající obě období, které mají nyní různou délku, tak nebudou vypovídající.",
+  text2_2a = "Databáze obsahuje nehody, které se staly od 1.1.2011. Při vybraném základním období by srovnávací období (",
+  text2_2b = ") sahalo před toto datum. Statistiky srovnávající obě období, které mají nyní různou délku, tak nebudou vypovídající.",
+  title3 = "Základní a srovnávací období se překrývají",
+  text3 = "Základní a srovnávací období se překrývají. Statistiky srovnávající obě období, které mají nyní různou délku, tak nebudou vypovídající.",
+  title4 = "Základní období předchází srovnávacímu období",
+  text4 = "Základní období předchází srovnávacímu období. Věnujte pozornost správné interpretaci statistik, které srovnávající obě období."
+)
+
+ACCCHAR <- list(
+  id = "ID nehody: ",
+  date = "Datum nehody: ",
+  type = "Druh nehody: ",
+  dead = "Počet mrtvých: ",
+  swound = "Počet těžce zraněných: ",
+  lwound = "Počet lehce zraněných: ",
+  damage = "Škoda na majetku: "
+)
+
+BOXTITLE <- list(
+  period_baseline = "Ve sledovaném období",
+  period_change = "Změna proti srovnávacímu období",
+  accidents = "Dopravních nehod",
+  dead = "Usmrceno osob",
+  swound = "Těžce zraněno osob",
+  lwound = "Lehce zraněno osob"
+)
+
+FIGS <- list(
+  period_baseline = "Základní období",
+  period_comparison = "Srovnávací období",
+  casualties = "Počet obětí",
+  accidents = "Počet nehod",
+  dead = "Počet zemřelých",
+  age = "Věk řidiče",
+  cluster_weight = "Závažnost klastru\nnehod",
+  cluster_order = "Pořadí klastru nehod podle závažnosti"
+)
+
+mpacc_levels <- list(
+  dead = "Nehoda s obětí na životech",
+  swound = "Nehoda s těžkým zraněním",
+  lwound = "Nehoda s lehkým zraněním",
+  other = "Ostatní nehody"
+)
+
+mpacc_choices <- list(
+  "Podle následků" = "nasledky", 
+  "Podle druhu nehody" = "druh_nehody"
+)
+
+mpacc_box <- c("Zelený polygon na mapě odpovídá oblasti poslední vybrané nehodové lokality na tabu 'Nehodové lokality'. Uživatel může pomocí mapových nástrojů nakreslit vlastní polygon, který je zobrazen modrou barvou. Nehody lze podle obou polygonů filtrovat.")

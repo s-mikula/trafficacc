@@ -38,8 +38,8 @@ ui <- dashboardPage(
         multiple = FALSE,
         width = '100%'
       ),
+      img(src='muni-lg-white.png', align = "center", width = "100%"),br(),
       img(src='muni-lg-cze-black.png', align = "center", width = "100%"),br(),
-      #img(src='muni-lg-white.png', align = "center", width = "100%"),br(),
       img(src='cuni.png', align = "center", width = "100%"),br(),
       img(src='Doprava.png', align = "center", width = "100%"),br()
     ),
@@ -224,10 +224,9 @@ ui <- dashboardPage(
               fluidRow(
                 column(12,
                        box(
-                         "Vývoj webové aplikace a software na identifikaci klastrů nehod na silniční síti byl podpořen
-                         grantem TA ČR (CK01000049): ",
-                         em("Tvorba pokročilých nástrojů pro analýzu dopravních nehod pro Policii ČR"),br(),
-                         "Autoři: Michal Kvasnička (michal.kvasnicka@econ.muni.cz) & Štěpán Mikula (stepan.mikula@econ.muni.cz)",
+                         AUTHORS$line1,
+                         em(AUTHORS$line2),br(),
+                         AUTHORS$line3,
                          width = 12
                        )
                        )
@@ -236,11 +235,11 @@ ui <- dashboardPage(
       ##### UI: Hotspots #####
       tabItem(tabName = "hotspots",
               fluidRow(
-                column(3,
+                column(5,
                        box(
                          selectInput(
                            "menu_period_hotspots",
-                           TITLE$base_period_fixed,
+                           TITLE$base_periodprofile_fixed,
                            unique(OPTIONS$period_menu),
                            selected = PERIOD_preselected,
                            width = '100%'
@@ -250,20 +249,20 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(2,
-                       box(
-                         selectInput(
-                           "menu_profile",
-                           TITLE$menu_profile,
-                           MENU$profile[MENU$profile %in% OPTIONS$profile],
-                           selected = "default",
-                           width = '100%'
-                         ),
-                         actionLink("help_profile",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
-                         status = "warning",
-                         width = 12
-                       )
-                ),
+                # column(2,
+                #        box(
+                #          selectInput(
+                #            "menu_profile",
+                #            TITLE$menu_profile,
+                #            MENU$profile[MENU$profile %in% OPTIONS$profile],
+                #            selected = "cost",
+                #            width = '100%'
+                #          ),
+                #          actionLink("help_profile",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
+                #          status = "warning",
+                #          width = 12
+                #        )
+                # ),
                 column(2,
                        box(
                          sliderInput(
@@ -314,6 +313,13 @@ ui <- dashboardPage(
                leafletOutput("mphot", height = 900),
                title = TITLE$mphot,
                width = 12
+               ),
+               box(
+                 tableOutput("profile_desc"),
+                 title = TITLE$profiledesc,
+                 collapsible = TRUE,
+                 collapsed = TRUE,
+                 width = 12
                )
                ),
         column(6,
@@ -368,10 +374,9 @@ ui <- dashboardPage(
       fluidRow(
         column(12,
                box(
-                 "Vývoj webové aplikace a software na identifikaci klastrů nehod na silniční síti byl podpořen
-                         grantem TA ČR (CK01000049): ",
-                 em("Tvorba pokročilých nástrojů pro analýzu dopravních nehod pro Policii ČR"),br(),
-                 "Autoři: Michal Kvasnička (michal.kvasnicka@econ.muni.cz) & Štěpán Mikula (stepan.mikula@econ.muni.cz)",
+                 AUTHORS$line1,
+                 em(AUTHORS$line2),br(),
+                 AUTHORS$line3,
                  width = 12
                )
         )
@@ -467,18 +472,13 @@ ui <- dashboardPage(
                       box(
                             radioButtons("mpacc_legend", 
                                          label = TITLE$mpacc_label,
-                            choices = list(
-                              "Podle následků" = "nasledky", 
-                              "Podle druhu nehody" = "druh_nehody"
-                            ),
+                            choices = mpacc_choices,
                             selected = "nasledky"),
                             status = "warning",
                             width = 6
                             ),
                       box(
-                        "Zelený polygon na mapě odpovídá oblasti poslední vybrané nehodové lokality",
-                        "na tabu 'Nehodové lokality'. Uživatel může pomocí mapových nástrojů nakreslit vlastní polygon, který je zobrazen modrou barvou. ",
-                        "Nehody lze podle obou polygonů filtrovat."
+                        mpacc_box
                       )
                         ),
               column(5,
@@ -516,10 +516,9 @@ ui <- dashboardPage(
           fluidRow(
             column(12,
                    box(
-                     "Vývoj webové aplikace a software na identifikaci klastrů nehod na silniční síti byl podpořen
-                         grantem TA ČR (CK01000049): ",
-                     em("Tvorba pokročilých nástrojů pro analýzu dopravních nehod pro Policii ČR"),br(),
-                     "Autoři: Michal Kvasnička (michal.kvasnicka@econ.muni.cz) & Štěpán Mikula (stepan.mikula@econ.muni.cz)",
+                     AUTHORS$line1,
+                     em(AUTHORS$line2),br(),
+                     AUTHORS$line3,
                      width = 12
                    )
             )
@@ -628,9 +627,9 @@ server <- function(input, output, session) {
       p1_end <- input$menu_period[1]
       
       shinyalert::shinyalert(
-        title = "Konec základního období předchází jeho začátku",
+        title = ALERT$title1,
         type = "warning",
-        text = "Specifikace období není korektní. Aplikace vyměnila začátek/konec období."
+        text = ALERT$text1
       )
     }
     
@@ -666,9 +665,9 @@ server <- function(input, output, session) {
         p2_end <- input$menu_period2[1]
         
         shinyalert::shinyalert(
-          title = "Konec srovnávacího období předchází jeho začátku",
+          title = ALERT$title1,
           type = "warning",
-          text = "Specifikace období není korektní. Aplikace vyměnila začátek/konec období."
+          text = ALERT$text1
         )
       }
       
@@ -695,37 +694,34 @@ server <- function(input, output, session) {
     
     if(p2_length != p1_length & input$menu_period2_user){
       shinyalert::shinyalert(
-        title = "Rozdílná délka základního a srovnávacího období",
+        title = ALERT$title2,
         type = "warning",
-        text = "Délka základního a srovnávacího období se liší. Statistiky srovnávající obě období, které mají nyní různou délku, tak nebudou vypovídající."
+        text = ALERT$title2_1
         )
     }
     
     if(p2_end >= p1_start & p2_end <= p1_end){
       shinyalert::shinyalert(
-        title = "Základní a srovnávací období se překrývají",
+        title = ALERT$title3,
         type = "warning",
-        text = "Základní a srovnávací období se překrývají. Statistiky srovnávající obě období, které mají nyní různou délku, tak nebudou vypovídající."
+        text = ALERT$text3
       )
     }
     
     if(p2_start >= p1_end){
       shinyalert::shinyalert(
-        title = "Základní období předchází srovnávacímu období",
+        title = ALERT$title4,
         type = "warning",
-        text = "Základní období předchází srovnávacímu období. Věnujte pozornost správné interpretaci statistik, které srovnávající obě období."
+        text = ALERT$text4
       )
     }
     
     
     if(p2_start < MINIMUM_DATE){
       shinyalert::shinyalert(
-        title = "Rozdílná délka základního a srovnávacího období",
+        title = ALERT$title2,
         type = "warning",
-        text = stringr::str_c("Databáze obsahuje nehody, které se staly od 1.1.2011. ",
-                              "Při vybraném základním období by srovnávací období (",
-                              p2_string,") sahalo před toto datum. Statistiky srovnávající obě období, které mají nyní různou délku, tak nebudou vypovídající."
-        )
+        text = stringr::str_c(ALERT$text2_2a,p2_string,ALERT$text2_2b)
       )
       
       p2_start <- MINIMUM_DATE
@@ -738,13 +734,13 @@ server <- function(input, output, session) {
     }
     
     
-    stringr::str_c("Srovnávací období: ",
+    stringr::str_c(TITLE$comp_period_set,
                    p2_string
     )
   })
   
   output$header_filteraccidents <- renderText({
-    stringr::str_c("Dopravní nehody ve výběru: ",
+    stringr::str_c(TITLE$filteracc,
                    names(MENU$filteraccidents)[MENU$filteraccidents == input$menu_filteraccidents])
   })
   
@@ -761,18 +757,19 @@ server <- function(input, output, session) {
       ) |>
       dplyr::filter(
         accident_date <= input$menu_period_accidents[2]
-      ) 
+      ) |>
+      dplyr::filter(accident_inside_the_district)
     
     out <- out |>
       dplyr::mutate(
         label = str_c(
-          "<b>ID nehody: </b>", accident_id,"<br>",
-          "<b>Datum nehody: </b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
-          "<b>Druh nehody: </b>", crashtype_nolinebreaks[as.character(accident_type)],"<br>",
-          "<b>Počet mrtvých: </b>", accident_dead,"<br>",
-          "<b>Počet těžce zraněných: </b>", accident_serious_injury,"<br>",
-          "<b>Počet lehce zraněných: </b>", accident_light_injury,"<br>",
-          "<b>Škoda na majetku: </b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
+          "<b>",ACCCHAR$id,"</b>", accident_id,"<br>",
+          "<b>",ACCCHAR$date,"</b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
+          "<b>",ACCCHAR$type,"</b>", crashtype_nolinebreaks[as.character(accident_type)],"<br>",
+          "<b>",ACCCHAR$dead,"</b>", accident_dead,"<br>",
+          "<b>",ACCCHAR$swound,"/b>", accident_serious_injury,"<br>",
+          "<b>",ACCCHAR$lwound,"</b>", accident_light_injury,"<br>",
+          "<b>",ACCCHAR$damage,"</b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
         )
       )
     
@@ -804,17 +801,18 @@ server <- function(input, output, session) {
     
     out <- read_accidents(
       district = input$menu_district
-    ) 
+    )
     
     out <- out |>
       dplyr::mutate(
         label = str_c(
-          "<b>ID nehody: </b>", accident_id,"<br>",
-          "<b>Datum nehody: </b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
-          "<b>Počet mrtvých: </b>", accident_dead,"<br>",
-          "<b>Počet těžce zraněných: </b>", accident_serious_injury,"<br>",
-          "<b>Počet lehce zraněných: </b>", accident_light_injury,"<br>",
-          "<b>Škoda na majetku: </b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
+          "<b>",ACCCHAR$id,"</b>", accident_id,"<br>",
+          "<b>",ACCCHAR$date,"</b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
+          "<b>",ACCCHAR$type,"</b>", crashtype_nolinebreaks[as.character(accident_type)],"<br>",
+          "<b>",ACCCHAR$dead,"</b>", accident_dead,"<br>",
+          "<b>",ACCCHAR$swound,"/b>", accident_serious_injury,"<br>",
+          "<b>",ACCCHAR$lwound,"</b>", accident_light_injury,"<br>",
+          "<b>",ACCCHAR$damage,"</b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
         )
       )
     
@@ -833,7 +831,8 @@ server <- function(input, output, session) {
       ) |>
       dplyr::filter(
         accident_date <= input$menu_period_accidents[2]
-      )
+      ) |>
+      dplyr::filter(accident_inside_the_district)
     
     # if(length(input$map_selection) != 0){
     #   if(input$map_selection[1] != "none"){
@@ -910,6 +909,7 @@ server <- function(input, output, session) {
     out <- read_accidents(
       district = input$menu_district
     ) |>
+      dplyr::filter(accident_inside_the_district) |>
       dplyr::filter(
         accident_date >= p1_start
       ) |>
@@ -979,6 +979,7 @@ server <- function(input, output, session) {
     out <- read_accidents(
       district = input$menu_district
     ) |>
+      dplyr::filter(accident_inside_the_district) |>
       dplyr::filter(
         accident_date >= p2_start
       ) |>
@@ -1021,7 +1022,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = TRUE, nsmall = 0L, big.mark = " ")
     
     valueBox(
-      pr, "Ve sledovaném období", 
+      pr, BOXTITLE$period_baseline, 
       color = "light-blue",
       icon = icon("car-burst")
     )
@@ -1034,7 +1035,7 @@ server <- function(input, output, session) {
     pr <- get_delta(n1,n2)
     
     valueBox(
-      pr, "Změna proti srovnávacímu období", 
+      pr, BOXTITLE$period_change, 
       color = ifelse((n1-n2)>0,"red","green"),
       icon = icon(get_arrow(n1-n2))
     )
@@ -1050,7 +1051,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = TRUE, nsmall = 0L, big.mark = " ")
     
     valueBox(
-      pr, "Ve sledovaném období", 
+      pr, BOXTITLE$period_baseline, 
       color = "light-blue",
       icon = icon("skull-crossbones")
     )
@@ -1068,7 +1069,7 @@ server <- function(input, output, session) {
     pr <- get_delta(n1,n2)
     
     valueBox(
-      pr, "Změna proti srovnávacímu období", 
+      pr, BOXTITLE$period_change, 
       color = ifelse((n1-n2)>0,"red","green"),
       icon = icon(get_arrow(n1-n2))
     )
@@ -1084,7 +1085,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = TRUE, nsmall = 0L, big.mark = " ")
     
     valueBox(
-      pr, "Ve sledovaném období", 
+      pr, BOXTITLE$period_baseline, 
       color = "light-blue",
       icon = icon("crutch")
     )
@@ -1102,7 +1103,7 @@ server <- function(input, output, session) {
     pr <- get_delta(n1,n2)
     
     valueBox(
-      pr, "Změna proti srovnávacímu období", 
+      pr, BOXTITLE$period_change, 
       color = ifelse((n1-n2)>0,"red","green"),
       icon = icon(get_arrow(n1-n2))
     )
@@ -1118,7 +1119,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = TRUE, nsmall = 0L, big.mark = " ")
     
     valueBox(
-      pr, "Ve sledovaném období", 
+      pr, BOXTITLE$period_baseline, 
       color = "light-blue",
       icon = icon("user-injured")
     )
@@ -1136,7 +1137,7 @@ server <- function(input, output, session) {
     pr <- get_delta(n1,n2)
     
     valueBox(
-      pr, "Změna proti srovnávacímu období", 
+      pr, BOXTITLE$period_change, 
       color = ifelse((n1-n2)>0,"red","green"),
       icon = icon(get_arrow(n1-n2))
     )
@@ -1191,14 +1192,14 @@ server <- function(input, output, session) {
         position = "dodge"
       ) +
       scale_x_continuous(
-        "Počet obětí"
+        FIGS$casualties
       ) +
       scale_fill_brewer(
         palette = "Set1",
         breaks = c("p1","p2"),
         labels = c(
-          "p1" = "Základní období",
-          "p2" = "Srovnávací období"
+          "p1" = FIGS$period_baseline,
+          "p2" = FIGS$period_comparison
         )
       ) +
       scale_y_discrete(
@@ -1249,14 +1250,14 @@ server <- function(input, output, session) {
         position = "dodge"
       ) +
       scale_x_continuous(
-        "Počet nehod"
+        FIGS$accidents
       ) +
       scale_fill_brewer(
         palette = "Set1",
         breaks = c("p1","p2"),
         labels = c(
-          "p1" = "Základní období",
-          "p2" = "Srovnávací období"
+          "p1" = FIGS$period_baseline,
+          "p2" = FIGS$period_comparison
         )
       ) +
       scale_y_discrete(
@@ -1296,7 +1297,7 @@ server <- function(input, output, session) {
         fill = "#377eb8"
       ) +
       scale_x_continuous(
-        "Počet nehod"
+        FIGS$accidents
       ) +
       scale_y_discrete(
         labels = causes
@@ -1336,7 +1337,7 @@ server <- function(input, output, session) {
         fill = "#377eb8"
       ) +
       scale_x_continuous(
-        "Počet zemřelých"
+        FIGS$dead
       ) +
       scale_y_discrete(
         labels = causes
@@ -1395,8 +1396,8 @@ server <- function(input, output, session) {
         palette = "Set1",
         breaks = c("p1","p2"),
         labels = c(
-          "p1" = "Základní období",
-          "p2" = "Srovnávací období"
+          "p1" = FIGS$period_baseline,
+          "p2" = FIGS$period_comparison
         )
       ) +
       scale_y_discrete(
@@ -1450,14 +1451,14 @@ server <- function(input, output, session) {
         position = "dodge"
       ) +
       scale_x_continuous(
-        "Počet nehod"
+        FIGS$dead
       ) +
       scale_fill_brewer(
         palette = "Set1",
         breaks = c("p1","p2"),
         labels = c(
-          "p1" = "Základní období",
-          "p2" = "Srovnávací období"
+          "p1" = FIGS$period_baseline,
+          "p2" = FIGS$period_comparison
         )
       ) +
       scale_y_discrete(
@@ -1494,10 +1495,10 @@ server <- function(input, output, session) {
         fill = "#377eb8"
       ) +
       scale_x_discrete(
-        "Věk řidiče"
+        FIGS$age
       ) +
       scale_y_continuous(
-        "Počet nehod"
+        FIGS$accidents
       ) +
       theme_classic(
         base_size = 16
@@ -1529,10 +1530,10 @@ server <- function(input, output, session) {
         fill = "#377eb8"
       ) +
       scale_x_discrete(
-        "Věk řidiče"
+        FIGS$age
       ) +
       scale_y_continuous(
-        "Počet zemřelých"
+        FIGS$dead
       ) +
       theme_classic(
         base_size = 16
@@ -1552,7 +1553,8 @@ server <- function(input, output, session) {
     
     out <- read_clusters(
       district = input$menu_district,
-      profile = input$menu_profile,
+      #profile = input$menu_profile,
+      profile = first(OPTIONS$profile[OPTIONS$period_menu == input$menu_period_hotspots]),
       period_start = first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period_hotspots]),
       period_end = first(OPTIONS$period_end[OPTIONS$period_menu == input$menu_period_hotspots])
     )
@@ -1608,13 +1610,32 @@ server <- function(input, output, session) {
   
   ###### UI ######
   
+  # output$controlPeriod <- renderUI({
+  #   
+  #   items <- OPTIONS |>
+  #     dplyr::filter(
+  #       district == input$menu_district
+  #     )
+  #   
+  #   tagList(
+  #     selectInput(
+  #       "menu_period_hotspots",
+  #       TITLE$base_periodprofile_fixed,
+  #       unique(items$period_menu),
+  #       selected = PERIOD_preselected,
+  #       width = '100%'
+  #     )
+  #   )
+  #   
+  # })
+  
   output$controlSorting <- renderUI({
     
     maxN <- get_clusters()
     
     tagList(
       sliderInput("menu_cluster", 
-                  "Výběr klastru dopravních nehod", 
+                  TITLE$menu_cluster, 
                   min = 1,
                   max = maxN$N,
                   step = 1,
@@ -1625,6 +1646,64 @@ server <- function(input, output, session) {
   })
   
   ###### Boxes #####
+  
+  output$profile_desc <- renderTable(
+    width = "100%",
+    striped = FALSE,
+    colnames = FALSE,
+    align = "lr",
+    {
+    
+    sidecar <- read_sidecar(
+      district = input$menu_district,
+      #profile = input$menu_profile,
+      profile = first(OPTIONS$profile[OPTIONS$period_menu == input$menu_period_hotspots]),
+      period_start = first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period_hotspots]),
+      period_end = first(OPTIONS$period_end[OPTIONS$period_menu == input$menu_period_hotspots])
+    ) |>
+      dplyr::mutate(
+        across(
+          where(
+            is.double
+          ),
+          format,
+          nsmall = 1,
+          big.mark = " ",
+          digits = 1,
+          trim = TRUE,
+          scientific = FALSE
+        )
+      ) |>
+      dplyr::mutate(
+        across(
+          everything(),
+          as.character
+        )
+      )
+      
+    
+    tibble::tribble(
+      ~label, ~value,
+      PROFILEDESC$PROFILE_COMMENT, sidecar$PROFILE_COMMENT,
+      PROFILEDESC$NKDE_METHOD, sidecar$NKDE_METHOD,
+      PROFILEDESC$UNIT_COST_CONST, sidecar$UNIT_COST_CONST, 
+      PROFILEDESC$UNIT_COST_DEAD, sidecar$UNIT_COST_DEAD, 
+      PROFILEDESC$UNIT_COST_SERIOUS_INJURY, sidecar$UNIT_COST_SERIOUS_INJURY, 
+      PROFILEDESC$UNIT_COST_LIGHT_INJURY, sidecar$UNIT_COST_LIGHT_INJURY, 
+      PROFILEDESC$UNIT_COST_MATERIAL, sidecar$UNIT_COST_MATERIAL, 
+      PROFILEDESC$UNIT_COST_SERIOUS_INJURY, sidecar$UNIT_COST_SERIOUS_INJURY,
+      PROFILEDESC$ACCIDENT_TO_ROAD_MAX_DISTANCE, sidecar$ACCIDENT_TO_ROAD_MAX_DISTANCE, 
+      PROFILEDESC$DISTRICT_BUFFER_SIZE, sidecar$DISTRICT_BUFFER_SIZE, 
+      PROFILEDESC$LIXEL_SIZE, sidecar$LIXEL_SIZE, 
+      PROFILEDESC$LIXEL_MIN_DIST, sidecar$LIXEL_MIN_DIST,
+      PROFILEDESC$NKDE_BW, sidecar$NKDE_BW, 
+      PROFILEDESC$NKDE_WEIGHTS, sidecar$NKDE_WEIGHTS,
+      PROFILEDESC$NKDE_AGG, sidecar$NKDE_AGG, 
+      PROFILEDESC$NKDE_ADAPTIVE, sidecar$NKDE_ADAPTIVE,
+      #PROFILEDESC$SUPPORTED_ROAD_CLASSES, sidecar$SUPPORTED_ROAD_CLASSES,
+      PROFILEDESC$NKDE_TRIM_BW, sidecar$NKDE_TRIM_BW
+    )
+  })
   
   output$box_acc_n_hot <- renderValueBox({
     if(length(input$menu_cluster) == 0){
@@ -1645,7 +1724,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
     
     valueBox(
-      pr, "Dopravních nehod", 
+      pr, BOXTITLE$accidents, 
       color = "light-blue",
       icon = icon("car-burst")
     )
@@ -1672,7 +1751,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
     
     valueBox(
-      pr, "Usmrceno osob", 
+      pr, BOXTITLE$dead, 
       color = "light-blue",
       icon = icon("skull-crossbones")
     )
@@ -1699,7 +1778,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
     
     valueBox(
-      pr, "Těžce zraněno osob", 
+      pr, BOXTITLE$swound, 
       color = "light-blue",
       icon = icon("crutch")
     )
@@ -1726,7 +1805,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
     
     valueBox(
-      pr, "Lehce zraněno osob", 
+      pr, BOXTITLE$lwound, 
       color = "light-blue",
       icon = icon("user-injured")
     )
@@ -1752,10 +1831,10 @@ server <- function(input, output, session) {
       geom_line() +
       geom_point() +
       scale_y_continuous(
-        "Závažnost klastru\nnehod"
+        FIGS$cluster_weight
       ) +
       scale_x_continuous(
-        "Pořadí klastru nehod podle závažnosti"
+        FIGS$cluster_order
       ) +
       theme_classic(
         base_size = 16
@@ -1800,10 +1879,10 @@ server <- function(input, output, session) {
         fill = "#377eb8"
       ) +
       scale_x_discrete(
-        "Věk řidiče"
+        FIGS$age
       ) +
       scale_y_continuous(
-        "Počet nehod"
+        FIGS$accidents
       ) +
       theme_classic(
         base_size = 16
@@ -1872,13 +1951,13 @@ server <- function(input, output, session) {
       ) |>
       dplyr::mutate(
         label = str_c(
-          "<b>ID nehody: </b>", accident_id,"<br>",
-          "<b>Datum nehody: </b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
-          "<b>Druh nehody: </b>", crashtype_nolinebreaks[as.character(accident_type)],"<br>",
-          "<b>Počet mrtvých: </b>", accident_dead,"<br>",
-          "<b>Počet těžce zraněných: </b>", accident_serious_injury,"<br>",
-          "<b>Počet lehce zraněných: </b>", accident_light_injury,"<br>",
-          "<b>Škoda na majetku: </b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
+          "<b>",ACCCHAR$id,"</b>", accident_id,"<br>",
+          "<b>",ACCCHAR$date,"</b>", strftime(accident_date, format = "%d.%m.%Y"),"<br>",
+          "<b>",ACCCHAR$type,"</b>", crashtype_nolinebreaks[as.character(accident_type)],"<br>",
+          "<b>",ACCCHAR$dead,"</b>", accident_dead,"<br>",
+          "<b>",ACCCHAR$swound,"/b>", accident_serious_injury,"<br>",
+          "<b>",ACCCHAR$lwound,"</b>", accident_light_injury,"<br>",
+          "<b>",ACCCHAR$damage,"</b>", format(1e6*accident_material_cost, nsmall=0, trim=TRUE, big.mark=" ")
         )
       )
     
@@ -2012,7 +2091,7 @@ server <- function(input, output, session) {
       }else{
         return(tribble(
           ~name, ~value,
-          "Ve výběru nejsou žádné smrtelné nehody.",""
+          ALERT$noacc,""
         ))
       }
     })
@@ -2065,7 +2144,7 @@ server <- function(input, output, session) {
       }else{
         return(tribble(
           ~name, ~value,
-          "Ve výběru nejsou žádné zaviněné nehody.",""
+          ALERT$noacc,""
         ))
       }
     })
@@ -2121,7 +2200,7 @@ server <- function(input, output, session) {
       }else{
         return(tribble(
           ~name, ~value,
-          "Ve výběru nejsou žádné nehody se známou příčinou.",""
+          ALERT$noacc_cause,""
         ))
       }
     })
@@ -2179,7 +2258,7 @@ server <- function(input, output, session) {
       }else{
         return(tribble(
           ~name, ~value,
-          "Ve výběru nejsou žádné nehody se známou příčinou.",""
+          ALERT$noacc_cause,""
         ))
       }
     })
@@ -2195,7 +2274,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
     
     valueBox(
-      pr, "Dopravních nehod", 
+      pr, BOXTITLE$accidents, 
       color = "light-blue",
       icon = icon("car-burst")
     )
@@ -2209,7 +2288,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
     
     valueBox(
-      pr, "Usmrceno osob", 
+      pr, BOXTITLE$dead, 
       color = "light-blue",
       icon = icon("skull-crossbones")
     )
@@ -2223,7 +2302,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
     
     valueBox(
-      pr, "Těžce zraněno osob", 
+      pr, BOXTITLE$swound, 
       color = "light-blue",
       icon = icon("crutch")
     )
@@ -2237,7 +2316,7 @@ server <- function(input, output, session) {
     pr <- format(n1, trim = FALSE, nsmall = 0, big.mark = " ")
     
     valueBox(
-      pr, "Lehce zraněno osob", 
+      pr, BOXTITLE$lwound, 
       color = "light-blue",
       icon = icon("user-injured")
     )
@@ -2284,7 +2363,7 @@ server <- function(input, output, session) {
       }else{
         return(tribble(
           ~name, ~value,
-          "Ve výběru nejsou žádné smrtelné nehody.",""
+          ALERT$noacc,""
         ))
       }
   })
@@ -2322,7 +2401,7 @@ server <- function(input, output, session) {
       }else{
         return(tribble(
           ~name, ~value,
-          "Ve výběru nejsou žádné zaviněné nehody.",""
+          ALERT$noacc_fault,""
         ))
       }
     })
@@ -2365,7 +2444,7 @@ server <- function(input, output, session) {
       }else{
         return(tribble(
           ~name, ~value,
-          "Ve výběru nejsou žádné nehody se známou příčinou.",""
+          ALERT$noacc_cause,""
         ))
       }
     })
@@ -2410,7 +2489,7 @@ server <- function(input, output, session) {
       }else{
         return(tribble(
           ~name, ~value,
-          "Ve výběru nejsou žádné nehody se známou příčinou.",""
+          ALERT$noacc_cause,""
         ))
       }
     })
@@ -2436,10 +2515,10 @@ server <- function(input, output, session) {
         fill = "#377eb8"
       ) +
       scale_x_discrete(
-        "Věk řidiče"
+        FIGS$age
       ) +
       scale_y_continuous(
-        "Počet nehod"
+        FIGS$accidents
       ) +
       theme_classic(
         base_size = 16
@@ -2475,10 +2554,10 @@ server <- function(input, output, session) {
     fdata <- get_accidents() |>
       dplyr::mutate(
         nasledky = dplyr::case_when(
-          accident_dead > 0 ~ "Nehoda s obětí na životech",
-          accident_serious_injury > 0 ~ "Nehoda s těžkým zraněním",
-          accident_light_injury > 0 ~ "Nehoda s lehkým zraněním",
-          TRUE ~ "Ostatní nehody"
+          accident_dead > 0 ~ mpacc_levels$dead,
+          accident_serious_injury > 0 ~ mpacc_levels$swound,
+          accident_light_injury > 0 ~ mpacc_levels$lwound,
+          TRUE ~ mpacc_levels$other
         )
       )
     
@@ -2489,10 +2568,10 @@ server <- function(input, output, session) {
                                  domain = fdata$nasledky,
                                  ordered = TRUE,
                         levels = c(
-                          "Nehoda s obětí na životech",
-                          "Nehoda s těžkým zraněním",
-                          "Nehoda s lehkým zraněním",
-                          "Ostatní nehody"
+                          mpacc_levels$dead,
+                          mpacc_levels$swound,
+                          mpacc_levels$lwound,
+                          mpacc_levels$other
                         ))
     
     leaflet(data = get_map_district()) |>
@@ -2565,10 +2644,10 @@ server <- function(input, output, session) {
     fdata <- get_accidents() |>
       dplyr::mutate(
         nasledky = dplyr::case_when(
-          accident_dead > 0 ~ "Nehoda s obětí na životech",
-          accident_serious_injury > 0 ~ "Nehoda s těžkým zraněním",
-          accident_light_injury > 0 ~ "Nehoda s lehkým zraněním",
-          TRUE ~ "Ostatní nehody"
+          accident_dead > 0 ~ mpacc_levels$dead,
+          accident_serious_injury > 0 ~ mpacc_levels$swound,
+          accident_light_injury > 0 ~ mpacc_levels$lwound,
+          TRUE ~ mpacc_levels$other
         )
       )
     
@@ -2576,10 +2655,10 @@ server <- function(input, output, session) {
     fpal <- colorFactor("Set1", domain = fdata$nasledky, 
                         ordered = TRUE,
                         levels = c(
-                          "Nehoda s obětí na životech",
-                          "Nehoda s těžkým zraněním",
-                          "Nehoda s lehkým zraněním",
-                          "Ostatní nehody"
+                          mpacc_levels$dead,
+                          mpacc_levels$swound,
+                          mpacc_levels$lwound,
+                          mpacc_levels$other
                         ))
     
     leafletProxy("mpacc") |>
@@ -2640,7 +2719,7 @@ server <- function(input, output, session) {
         fillOpacity = 0.5
       ) %>% 
       addLegend(
-        title = "Druh nehody",
+        title = ACCCHAR$type,
         position = "topright",
         pal = fpal,
         values = fdata$druh_nehody, 
@@ -2816,8 +2895,8 @@ server <- function(input, output, session) {
         cluster_id = input$menu_cluster,
         period = input$menu_period_hotspots,
         quantile = input$menu_quantile,
-        spill = input$menu_spill,
-        profile = names(MENU$profile[MENU$profile == input$menu_profile])
+        spill = input$menu_spill#,
+        #profile = names(MENU$profile[MENU$profile == input$menu_profile])
       )
       
       # Knit the document, passing in the `params` list, and eval it in a
