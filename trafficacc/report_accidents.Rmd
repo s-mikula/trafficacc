@@ -109,7 +109,7 @@ format_integer <- function(x){
 
 ```
 
-```{r, echo=FALSE, fig.align='center', fig.height=4}
+```{r, echo=FALSE, fig.align='center', fig.height=4, message=FALSE, warning=FALSE}
 if(nrow(params$data_accidents) > 0){
 
 accidents_buffer <-

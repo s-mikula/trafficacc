@@ -247,3 +247,23 @@ conditional_view <- function(lfl, condition = FALSE, centroid = NULL, lflzoom = 
     return(lfl)
   }
 }
+
+remove_linebreaks <- function(x){
+  
+  if(!is.list(x)){
+    x %>%
+      as.list() |>
+      purrr::map_chr(
+        stringr::str_replace_all,
+        "\\n"," "
+      )
+  }else{
+    x %>%
+      as.list() |>
+      purrr::map_chr(
+        stringr::str_replace_all,
+        "\\n"," "
+      )
+  }
+  
+}

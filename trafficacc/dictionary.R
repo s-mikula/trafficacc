@@ -168,18 +168,7 @@ casualties <- c(
   "casualties_other_crew" = "spolujezdec na jiném\ndopravním prostředku"
 )
 
-casualties_nolinebreaks <- c(
-  "casualties_pedestrian" = "chodec",
-  "casualties_car_driver" = "řidič osobního vozidla",
-  "casualties_car_crew" = "spolujezdec v osobním vozidle",
-  "casualties_bike_driver" = "cyklista",
-  "casualties_truck_driver" = "řidič nákladního vozidla",
-  "casualties_truck_crew" = "spolujezdec v nákladním vozidle",
-  "casualties_motobike_driver" = "motocyklista",
-  "casualties_motobike_crew" = "spolujezdec na motocyklu",
-  "casualties_other_driver" = "řidič jiného dopravního prostředku",
-  "casualties_other_crew" = "spolujezdec na jiném dopravním prostředku"
-)
+casualties_nolinebreaks <- remove_linebreaks(casualties)
 
 faults <- c(
   "1"="řidičem motorového\nvozidla",
@@ -192,16 +181,7 @@ faults <- c(
   "0"="jiné zavinení"
 )
 
-faults_nolinebreaks <- c(
-  "1"="řidičem motorového vozidla",
-  "2"="řidičem nemotorového vozidla",
-  "3"="chodcem",
-  "4"="lesní a domácí zvěří",
-  "5"="jiným účastníkem silničního provozu",
-  "6"="závadou komunikace",
-  "7"="technickou závadou vozidla",
-  "0"="jiné zavinení"
-)
+faults_nolinebreaks <- remove_linebreaks(faults)
 
 causes <- c(
   "100" = "nezaviněná řidičem",
@@ -269,71 +249,7 @@ causes <- c(
   "615" = "jiná technická závada"
 )
 
-causes_nolinebreaks <- c(
-  "100" = "nezaviněná řidičem",
-  "201" = "nepřizpůsobení rychlosti hustotě provozu",
-  "202" = "nepřizpůsobení rychlosti viditelnosti",
-  "203" = "nepřizpůsobení rychlosti vlastn. vozidla a nákladu",
-  "204" = "nepřizpůsobení rychlosti stavu vozovky",
-  "205" = "nepřizpůsobení rychlosti dopr.techn.stavu vozovky",
-  "206" = "překročení předepsané rychlosti stanovené pravidly",
-  "207" = "překročení rychlosti stanovené dopravní značkou",
-  "208" = "nepřizpůsobení rychlosti bočnímu, nárazovému větru",
-  "209" = "jiný druh nepřiměřené rychlosti",
-  "301" = "předjíždění vpravo",
-  "302" = "předjíždění bez dostatečného bočního odstupu",
-  "303" = "předjíždění bez dostatečného rozhledu",
-  "304" = "při předj. došlo k ohrož. protijedoucího řidiče v.",
-  "305" = "při předj. došlo k ohrož. předjížděného řidiče v.",
-  "306" = "předjíždění vlevo vozidla odbočujícího vlevo",
-  "307" = "předj. v místech, kde je to zakazáno dopr.značkou",
-  "308" = "při předj. byla přejeta podélná čára souvislá",
-  "309" = "bránění v předjíždění",
-  "310" = "přehlédnutí již předjíždějícího souběžně jed. voz.",
-  "311" = "jiný druh nesprávného předjíždění",
-  "401" = "jízda na červené světlo",
-  "402" = "nedání předn. proti příkazu d.z. STŮJ DEJ PŘEDNOST",
-  "403" = "nedání předn. proti příkazu d.z. DEJ PŘEDNOST",
-  "404" = "nedání předn. vozidlu přijíždějícímu zprava",
-  "405" = "nedání předn. při odbočování vlevo",
-  "406" = "nedání předn. tramvaji, která odbočuje",
-  "407" = "nedání předn. protijed.voz. při objíždění překážky",
-  "408" = "nedání předn. při zařazování do proudu jedouc.voz.",
-  "409" = "nedání předn. při vjížděnína silnici",
-  "410" = "nedání předn. při otáčení nebo couvání",
-  "411" = "nedání předn. při přejíždění z pruhu do pruhu",
-  "412" = "nedání předn. chodci na vyznačeném přechodu",
-  "413" = "nedání předn. při odboč.vlevo souběžně jedouc.voz.",
-  "414" = "jiné nedání přednosti",
-  "501" = "jízda po nespr.straně vozovky, vjetí do protisměru",
-  "502" = "vyhýbání bez dostatečné boční vůle",
-  "503" = "nedodržení bezpečné vzdálenosti za vozidlem",
-  "504" = "nesprávné otáčení nebo couvání",
-  "505" = "chyby při udání směru jízdy",
-  "506" = "bezohledná, agresivní, neohleduplná jízda",
-  "507" = "náhlé bezdůvodné snížení rychlosti jízdy,zastavení",
-  "508" = "řidič se plně nevěnoval řízení vozidla",
-  "509" = "samovolné rozjetí nezajištěného vozidla",
-  "510" = "vjetí na nezpevněnou krajnici",
-  "511" = "nezvládnutí řízení vozidla",
-  "512" = "jízda (vjetí) jednosměrnou ulicí, silnicí",
-  "516" = "jiný druh nesprávného způsobu jízdy",
-  "601" = "závada řízení",
-  "602" = "závada provozní brzdy",
-  "603" = "neúčinná nebo nefungující parkovací brzda",
-  "604" = "optřebení běhounu pláště pod stanovenou mez",
-  "605" = "defekt pneumatiky - průrazem, náhlým únikem vzd.",
-  "606" = "závada osvětlovací soustavy vozidla",
-  "607" = "nepřipoj./poškoz. spoj. hadice pro brzd.přípoj.voz.",
-  "608" = "nesprávné uložení nákladu",
-  "609" = "upadnutí, ztráta kola vozidla (i rezervního)",
-  "610" = "zablokování kol v důsledku mech. závady vozidla",
-  "611" = "lom závěsu kola, pružiny",
-  "612" = "nazajištěná, poškozená bočnice (i u přívěsu)",
-  "613" = "závada závěsu pro přívěs",
-  "614" = "utržená spojovací hřídel",
-  "615" = "jiná technická závada"
-)
+causes_nolinebreaks <- remove_linebreaks(causes)
 
 crashtype <- c(
   "1" = "srážka s jedoucím\nnekolejovým vozidlem",
@@ -348,18 +264,7 @@ crashtype <- c(
   "0" = "jiný druh nehody"
 )
 
-crashtype_nolinebreaks <- c(
-  "1" = "srážka s jedoucím nekolejovým vozidlem",
-  "2" = "srážka s vozidlem zaparkovaným, odstav.",
-  "3" = "srážka s pevnou překážkou",
-  "4" = "srážka s chodcem",
-  "5" = "srážka s lesní zvěří",
-  "6" = "srážka s domácím zvířetem",
-  "7" = "srážka s vlakem",
-  "8" = "srážka s tramvají",
-  "9" = "havárie",
-  "0" = "jiný druh nehody"
-)
+crashtype_nolinebreaks <- remove_linebreaks(crashtype)
 
 obstacletype <- c(
   "1" = "strom",

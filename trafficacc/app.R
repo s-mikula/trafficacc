@@ -1691,7 +1691,7 @@ server <- function(input, output, session) {
       PROFILEDESC$UNIT_COST_SERIOUS_INJURY, sidecar$UNIT_COST_SERIOUS_INJURY, 
       PROFILEDESC$UNIT_COST_LIGHT_INJURY, sidecar$UNIT_COST_LIGHT_INJURY, 
       PROFILEDESC$UNIT_COST_MATERIAL, sidecar$UNIT_COST_MATERIAL, 
-      PROFILEDESC$UNIT_COST_SERIOUS_INJURY, sidecar$UNIT_COST_SERIOUS_INJURY,
+      #PROFILEDESC$UNIT_COST_SERIOUS_INJURY, sidecar$UNIT_COST_SERIOUS_INJURY,
       PROFILEDESC$ACCIDENT_TO_ROAD_MAX_DISTANCE, sidecar$ACCIDENT_TO_ROAD_MAX_DISTANCE, 
       PROFILEDESC$DISTRICT_BUFFER_SIZE, sidecar$DISTRICT_BUFFER_SIZE, 
       PROFILEDESC$LIXEL_SIZE, sidecar$LIXEL_SIZE, 
@@ -2821,12 +2821,8 @@ server <- function(input, output, session) {
   #### Reports ####
   
   output$report_overview <- downloadHandler(
-    # For PDF output, change this to "report.pdf"
     filename = "report_ovr.html",
     content = function(file) {
-      # Copy the report file to a temporary directory before processing it, in
-      # case we don't have write permissions to the current working dir (which
-      # can happen when deployed).
       tempReport <- file.path(tempdir(), "report_overview.Rmd")
       file.copy("report_overview.Rmd", tempReport, overwrite = TRUE)
 
@@ -2841,9 +2837,6 @@ server <- function(input, output, session) {
         accfilter = input$menu_filteraccidents
       )
 
-      # Knit the document, passing in the `params` list, and eval it in a
-      # child of the global environment (this isolates the code in the document
-      # from the code in this app).
       rmarkdown::render(tempReport, output_file = file,
                         params = params,
                         envir = new.env(parent = globalenv())
@@ -2852,12 +2845,8 @@ server <- function(input, output, session) {
   )
   
   output$report_accidents <- downloadHandler(
-    # For PDF output, change this to "report.pdf"
     filename = "report_acc.html",
     content = function(file) {
-      # Copy the report file to a temporary directory before processing it, in
-      # case we don't have write permissions to the current working dir (which
-      # can happen when deployed).
       tempReport <- file.path(tempdir(), "report_accidents.Rmd")
       file.copy("report_accidents.Rmd", tempReport, overwrite = TRUE)
       
@@ -2868,9 +2857,6 @@ server <- function(input, output, session) {
         accfilter = input$menu_filteraccidents_accidents
       )
       
-      # Knit the document, passing in the `params` list, and eval it in a
-      # child of the global environment (this isolates the code in the document
-      # from the code in this app).
       rmarkdown::render(tempReport, output_file = file,
                         params = params,
                         envir = new.env(parent = globalenv())
@@ -2879,12 +2865,8 @@ server <- function(input, output, session) {
   )
   
   output$report_cluster <- downloadHandler(
-    # For PDF output, change this to "report.pdf"
     filename = "report_clu.html",
     content = function(file) {
-      # Copy the report file to a temporary directory before processing it, in
-      # case we don't have write permissions to the current working dir (which
-      # can happen when deployed).
       tempReport <- file.path(tempdir(), "report_cluster.Rmd")
       file.copy("report_cluster.Rmd", tempReport, overwrite = TRUE)
       
@@ -2895,13 +2877,18 @@ server <- function(input, output, session) {
         cluster_id = input$menu_cluster,
         period = input$menu_period_hotspots,
         quantile = input$menu_quantile,
-        spill = input$menu_spill#,
+        spill = input$menu_spill,
+        sidecar = read_sidecar(
+          district = input$menu_district,
+          #profile = input$menu_profile,
+          profile = first(OPTIONS$profile[OPTIONS$period_menu == input$menu_period_hotspots]),
+          period_start = first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period_hotspots]),
+          period_end = first(OPTIONS$period_end[OPTIONS$period_menu == input$menu_period_hotspots])
+        ),
+        sidecardesc = PROFILEDESC
         #profile = names(MENU$profile[MENU$profile == input$menu_profile])
       )
       
-      # Knit the document, passing in the `params` list, and eval it in a
-      # child of the global environment (this isolates the code in the document
-      # from the code in this app).
       rmarkdown::render(tempReport, output_file = file,
                         params = params,
                         envir = new.env(parent = globalenv())

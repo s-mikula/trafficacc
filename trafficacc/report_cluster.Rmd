@@ -8,7 +8,8 @@ params:
   all_accidents: NA
   quantile: NA
   spill: NA
-  profile: NA
+  sidecar: NA
+  sidecardesc: NA
 ---
 
 ```{r, echo = FALSE}
@@ -36,7 +37,9 @@ library(leaflet, quietly = TRUE)
 
 - Promile nejhorších úseků: `r params$quantile`
 - Dodatečný rozliv klastrů: `r params$spill` lixelů (jeden lixel je v průměru asi 5 metrů)
-- Profil: `r params$profile`
+
+
+
 
 ```{r, echo=FALSE}
 if(length(params$cluster_id) == 0){
@@ -93,6 +96,59 @@ mapy_centroid <- str_c(
 ```
 
 - Souřadnice orientačního středu shluku nehod: `r cluster_centroid[1]`, `r cluster_centroid[2]` (`r mapy_centroid`)
+
+```{r, echo=FALSE}
+PROFILEDESC <- params$sidecardesc
+
+sidecar <- params$sidecar |>
+      dplyr::mutate(
+        across(
+          where(
+            is.double
+          ),
+          format,
+          nsmall = 1,
+          big.mark = " ",
+          digits = 1,
+          trim = TRUE,
+          scientific = FALSE
+        )
+      ) |>
+      dplyr::mutate(
+        across(
+          everything(),
+          as.character
+        )
+      )
+      
+    
+    tibble::tribble(
+      ~label, ~value,
+      PROFILEDESC$PROFILE_COMMENT, sidecar$PROFILE_COMMENT,
+      PROFILEDESC$NKDE_METHOD, sidecar$NKDE_METHOD,
+      PROFILEDESC$UNIT_COST_CONST, sidecar$UNIT_COST_CONST, 
+      PROFILEDESC$UNIT_COST_DEAD, sidecar$UNIT_COST_DEAD, 
+      PROFILEDESC$UNIT_COST_SERIOUS_INJURY, sidecar$UNIT_COST_SERIOUS_INJURY, 
+      PROFILEDESC$UNIT_COST_LIGHT_INJURY, sidecar$UNIT_COST_LIGHT_INJURY, 
+      PROFILEDESC$UNIT_COST_MATERIAL, sidecar$UNIT_COST_MATERIAL 
+      #PROFILEDESC$UNIT_COST_SERIOUS_INJURY, sidecar$UNIT_COST_SERIOUS_INJURY,
+      # PROFILEDESC$ACCIDENT_TO_ROAD_MAX_DISTANCE, sidecar$ACCIDENT_TO_ROAD_MAX_DISTANCE, 
+      # PROFILEDESC$DISTRICT_BUFFER_SIZE, sidecar$DISTRICT_BUFFER_SIZE, 
+      # PROFILEDESC$LIXEL_SIZE, sidecar$LIXEL_SIZE, 
+      # PROFILEDESC$LIXEL_MIN_DIST, sidecar$LIXEL_MIN_DIST,
+      # PROFILEDESC$NKDE_BW, sidecar$NKDE_BW, 
+      # PROFILEDESC$NKDE_WEIGHTS, sidecar$NKDE_WEIGHTS,
+      # PROFILEDESC$NKDE_AGG, sidecar$NKDE_AGG, 
+      # PROFILEDESC$NKDE_ADAPTIVE, sidecar$NKDE_ADAPTIVE,
+      # #PROFILEDESC$SUPPORTED_ROAD_CLASSES, sidecar$SUPPORTED_ROAD_CLASSES,
+      # PROFILEDESC$NKDE_TRIM_BW, sidecar$NKDE_TRIM_BW
+    ) |>
+    kable(
+      col.names = c("Paramter","Nastavení"),
+      align = "lr",
+      caption = "Nastavení profilu a výpočtu shluků nehod"
+    )
+```
 
 
 ```{r, echo=FALSE, fig.align='center', fig.height=6}
@@ -153,7 +209,7 @@ mapy_centroid <- str_c(
 
 ```
 
-```{r, echo=FALSE, fig.align='center', fig.height=4}
+```{r, echo=FALSE, fig.align='center', fig.height=4, message=FALSE, warning=FALSE}
 cluster_lines <-
   params$data_clusters$clusters %>%
   filter(cluster == selected_cluster) %>%
