@@ -280,24 +280,23 @@ obstacletype <- c(
 )
 
 PROFILEDESC <- list(
-  PROFILE_COMMENT = "",
-  NKDE_METHOD = "",
-  UNIT_COST_CONST = "",
-  UNIT_COST_DEAD = "",
-  UNIT_COST_SERIOUS_INJURY = "",
-  UNIT_COST_LIGHT_INJURY = "",
-  UNIT_COST_MATERIAL = "",
-  UNIT_COST_SERIOUS_INJURY = "",
+  PROFILE_COMMENT = "popis profilu",
+  NKDE_METHOD = "způsob rozlivu nehod přes křižovatky",
+  UNIT_COST_CONST = "jednotková váha připočtená ke každé škodě",
+  UNIT_COST_DEAD = "koeficient hodnoty života v mil. Kč",
+  UNIT_COST_SERIOUS_INJURY = "koeficient hodnoty vážného zranění v mil. Kč",
+  UNIT_COST_LIGHT_INJURY = "koeficient hodnoty lehkého zranění v mil. Kč",
+  UNIT_COST_MATERIAL = "koeficient hodnoty materiálních škod (násobitel)",
   ACCIDENT_TO_ROAD_MAX_DISTANCE = "",
   DISTRICT_BUFFER_SIZE = "",
-  LIXEL_SIZE = "",
+  LIXEL_SIZE = "typická délka lixelů v metrech",
   LIXEL_MIN_DIST = "",
-  NKDE_BW = "",
+  NKDE_BW = "největší rozliv nehody v metrech",
   SUPPORTED_ROAD_CLASSES = "",
-  NKDE_WEIGHTS = "",
+  NKDE_WEIGHTS = "způsob vážení nehod při výpočtu klastrů",
   NKDE_AGG = "",
-  NKDE_ADAPTIVE = "",
-  NKDE_TRIM_BW = ""
+  NKDE_ADAPTIVE = "je největší možný rozliv stanoven adaptivně?",
+  NKDE_TRIM_BW = "maximální povolený rozliv vlivu nehod při adaptivním stanovení rozlivu"
 )
 
 AUTHORS <- list(
