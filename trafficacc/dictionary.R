@@ -57,7 +57,8 @@ HELP <- list(
   sorting_text = c("Shluky nehod jsou řazeny podle závažnosti - číslo shluku odpovídá jeho pořadí. Kritérium závažnosti je možné zvolit v rolovacím menu. Pro bližší analýzu dopravních nehod, které se staly na místě identifikovaného shluku, je možné použít nástroje v tabu 'Dopravní nehody'. Pro analýzu v jiném software lze stáhnout geografické vymezení shluku nehod ve formátu GeoJSON."),
   #filteraccidents_text = c(),
   filtercluster_text = c("Omezí dopravní nehody na ty, které se staly v oblasti shluku nehod aktuálně vybraného na tabu 'Nehodové lokality'. Zahrnuté nehody v tabu 'Nehodové lokality' mohou být - i při výběru stejného období - mírně odlišné. Důvodem je odlišné přiřazování nehod ke shlukům. Na tabu 'Dopravní nehody' se používá čistě geografické vymezení shluku. Konečný výběr nehod je průnikem všech filtrů (AND)."),
-  filterpolygon_text = c("Na mapě je možné nakreslit obdélník nebo polygon. V případě zapnutí filtru se výběr omezí na nehody, které se staly uvnitř zvoleného polygonu. Konečný výběr nehod je průnikem všech filtrů (AND).")
+  filterpolygon_text = c("Na mapě je možné nakreslit obdélník nebo polygon. V případě zapnutí filtru se výběr omezí na nehody, které se staly uvnitř zvoleného polygonu. Konečný výběr nehod je průnikem všech filtrů (AND)."),
+  report_text = ("Tlačítko 'Report' generuje HTML report dle nastavení uživatele v aplikaci. Tlačítko 'Pravidelný reporting' generuje ZIP s HTML soubory pro jednotlivé okresy. Pravidelný reporting používá pevně přednastavené periody.")
 )
 
 MENU <- list(

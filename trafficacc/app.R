@@ -124,6 +124,8 @@ ui <- dashboardPage(
                        box(
                          p(TITLE$report),
                          downloadButton("report_overview", "Report"),
+                         downloadButton("reportset", "Pravidelný reporting"),br(),
+                         actionLink("help_report",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
                        )
@@ -606,6 +608,10 @@ server <- function(input, output, session) {
   
   observeEvent(input$help_periodovr, {
     shinyalert(TITLE$help, HELP$periodovr_text, type = "info")
+  })
+  
+  observeEvent(input$help_report, {
+    shinyalert(TITLE$help, HELP$report_text, type = "info")
   })
   
   
@@ -3014,6 +3020,89 @@ server <- function(input, output, session) {
                         params = params,
                         envir = new.env(parent = globalenv())
       )
+    }
+  )
+  
+  output$reportset <- downloadHandler(
+    filename = "reportset.zip",
+    content = function(file) {
+      
+      rr_today <- Sys.Date()
+      day(rr_today) <- day(rr_today) - 365
+      
+      # First day of the year
+      rr_period1_1 <- rr_today
+      month(rr_period1_1) <- 1
+      day(rr_period1_1) <- 1
+      
+      # Last day of the previous month
+      rr_period1_2 <- rr_today
+      day(rr_period1_2) <- 1
+      day(rr_period1_2) <- day(rr_period1_2) - 1
+      
+      # Baseline period (p1)
+      rr_period1 <- c(rr_period1_1,rr_period1_2)
+      
+      # Comparison period (p2)
+      rr_period2 <- rr_period1
+      year(rr_period2[1]) <- year(rr_period2[1]) - 1
+      year(rr_period2[2]) <- year(rr_period2[2]) - 1
+      
+      
+      rr_districts <- 
+        OPTIONS %>% 
+        distinct(district) %>% 
+        pull(district)
+      
+      
+      tmpdir_path <- tempdir()
+      
+      for(loop_dist in rr_districts){
+        
+        accp1 <- read_rds(
+          str_c(ACCIDENTS_REPOSITORY,"accidents_",loop_dist,".rds")
+        ) %>% 
+          filter(
+            accident_date >= rr_period1[1],
+            accident_date <= rr_period1[2]
+          )
+        
+        accp2 <- read_rds(
+          str_c(ACCIDENTS_REPOSITORY,"accidents_",loop_dist,".rds")
+        ) %>% 
+          filter(
+            accident_date >= rr_period2[1],
+            accident_date <= rr_period2[2]
+          )
+        
+        params <- list(
+          district = names(MENU$district)[MENU$district == loop_dist],
+          data_accidents_p1 = accp1,
+          data_accidents_p2 = accp2,
+          period = rr_period1,
+          period_user = FALSE,
+          period2 = rr_period2,
+          accfilter = input$menu_filteraccidents
+        )
+        
+        
+        tempReport <- file.path(tmpdir_path, "report_overview.Rmd")
+        file.copy("report_overview.Rmd", tempReport, overwrite = TRUE)
+        
+        
+        rmarkdown::render(tempReport, output_file = file.path(tmpdir_path, str_c(loop_dist,"_overview.html")),
+                          params = params,
+                          envir = new.env(parent = globalenv())
+        )
+        
+      }
+      
+      zip(
+        zipfile = file,
+        list.files(path = tmpdir_path, pattern = ".html", full.names = TRUE), 
+        extras = '-j'
+      )
+      
     }
   )
 } 
