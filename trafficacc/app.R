@@ -15,6 +15,12 @@ map_districts <-
   ) %>% 
   sf::st_transform(4326)
 
+map_orp <- 
+  readr::read_rds(
+    stringr::str_c(APPDATA_REPOSITORY,"districts_orp.rds")
+  ) %>% 
+  sf::st_transform(4326)
+
 # Define UI for application that draws a histogram
 #### UI ####
 ui <- dashboardPage(
@@ -79,7 +85,7 @@ ui <- dashboardPage(
                          ),
                          materialSwitch(
                            "menu_period2_user",
-                           TITLE$Ccomp_period,
+                           TITLE$comp_period,
                            inline = TRUE,
                            value = FALSE,
                            width = '100%'
@@ -217,6 +223,15 @@ ui <- dashboardPage(
                        box(
                          plotOutput("fig_agedead"),
                          title = TITLE$fig_agedead,
+                         width = 12
+                       )
+                )
+              ),
+              fluidRow(
+                column(12,
+                       box(
+                         plotOutput("fig_timedist"),
+                         title = TITLE$fig_timedist,
                          width = 12
                        )
                 )
@@ -1545,6 +1560,106 @@ server <- function(input, output, session) {
       )
   })
   
+  output$fig_timedist <- renderPlot({
+    acc_plot <- 
+      get_accidents_p1() |> 
+      dplyr::select(accident_date) |> 
+      sf::st_drop_geometry() |>
+      dplyr::group_by(accident_date) |> 
+      dplyr::summarise(obs = n()) %>%  
+      tidyr::complete(
+        accident_date = seq(from = min(.$accident_date), to = max(.$accident_date), by = 1),
+        fill = list(obs = 0)
+      ) |> 
+      dplyr::mutate(
+        day  = wday(accident_date, week_start = 1) %>% as.character(),
+        week = isoweek(accident_date) %>% as.character(),
+      ) |> 
+      dplyr::select(-accident_date) |> 
+      dplyr::group_by(week,day) |> 
+      dplyr::summarise(
+        obs = sum(obs)/n(),
+        .groups = "drop"
+      ) |> 
+      dplyr::mutate(
+        obs = 100*obs/sum(obs)
+      ) |> 
+      dplyr::mutate(
+        week = factor(week, levels = 1:54),
+        day = factor(day, levels = 1:7, 
+                     labels = c("pondělí","úterý","středa","čtvrtek","pátek","sobota","neděle"))
+      )
+    
+    xdata <- acc_plot |> 
+      group_by(week) |> 
+      summarise(
+        obs = sum(obs),
+        .groups = "drop"
+      ) |> 
+      mutate(
+        xobs = 100*obs/sum(obs)
+      ) |> 
+      select(-obs)
+    
+    ydata <- acc_plot |> 
+      group_by(day) |>
+      summarise(
+        obs = sum(obs),
+        .groups = "drop"
+      ) |> 
+      mutate(
+        yobs = 100*obs/sum(obs)
+      ) |>
+      select(-obs)
+    
+    acc_plot |>
+      ggplot(
+        aes(x = week)
+      ) +
+      geom_tile(
+        aes(y=day, fill=obs)
+      ) +
+      geom_xsidetile(
+        data = xdata,
+        aes(xfill = xobs, y = "celkem")
+      ) +
+      geom_ysidetile(
+        data = ydata,
+        aes(yfill = yobs, x = "celkem", y = day)
+      ) +
+      scale_fill_distiller(
+        "Za den v roce (%)",
+        palette = "OrRd",
+        direction = 1,
+        guide = guide_colorbar(order = 1)
+      ) +
+      scale_xfill_gradient(
+        "Za týden v roce (%)",
+        low = "#deebf7",
+        high = "#08306b"
+      ) +
+      scale_yfill_gradient(
+        "Za den v týdnu (%)",
+        low = "#deebf7",
+        high = "#08306b"
+      ) +
+      scale_y_discrete(
+        limits = c("pondělí","úterý","středa","čtvrtek","pátek","sobota","neděle")
+      ) + 
+      scale_xsidey_discrete() +
+      scale_ysidex_discrete() +
+      scale_x_discrete(
+        "Týden v roce",
+        limits = as.character(1:53)
+      ) + 
+      theme_classic(
+        base_size = 16
+      ) +
+      theme(
+        axis.title.y = element_blank(),
+        legend.position = "bottom"
+      )
+  })
   
   ##### Hotspots #####
   
@@ -2545,6 +2660,12 @@ server <- function(input, output, session) {
   ###### Maps #####
   get_map_district <- reactive({
     map_districts |>
+      filter(district_id == input$menu_district) |>
+      st_geometry()
+  })
+  
+  get_map_orp <- reactive({
+    map_orp |>
       filter(district_id == input$menu_district) |>
       st_geometry()
   })

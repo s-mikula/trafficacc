@@ -44,14 +44,15 @@ TITLE <- list(
     "Podle druhu nehody" = "druh_nehody"
   ),
   profiledesc = "Nastavení profilu a výpočtu shluků nehod",
-  filteracc = "Dopravní nehody ve výběru: "
+  filteracc = "Dopravní nehody ve výběru: ",
+  fig_timedist = "Podíl dopravních nehod podle času (v základním období)"
 )
 
 HELP <- list(
   periodovr_text = c("Umožnuje výběr základního období. Srovnávací období je automaticky nastaveno jako předcházející období o stejné délce."),
   period_clusters_text = c("Výběr období, pro které jsou vypočítány shluky dopravních nehod. Výpočet shluků je náročný a proto je možné vybírat pouze z předem připravených možností."),
   profile_text = c("TBD"),
-  severity_text = c("TBD"),
+  severity_text = c("Parametr nastavuje, které nehody se berou v potaz pro výpočet shluků nehod. Nížší hodnoty vedou k zahrnutí jen problémovějších úseků. "),
   spill_text = c("Parametr ovlivňuje spojování shluků dopravních nehod, které leží blízko sebe. Shluky kterou jsou od sebe blíže, než je nastavená vzdálenost, se slijí do jednoho shluku. Vzdálenost je měřena v úsecící silnic - lixelech (1 lixel je v průměru cca 5 metrů). Vyšší hodnota parametru vede k nižšímu počtu rozsáhlejších shluků."),
   sorting_text = c("Shluky nehod jsou řazeny podle závažnosti - číslo shluku odpovídá jeho pořadí. Kritérium závažnosti je možné zvolit v rolovacím menu. Pro bližší analýzu dopravních nehod, které se staly na místě identifikovaného shluku, je možné použít nástroje v tabu 'Dopravní nehody'. Pro analýzu v jiném software lze stáhnout geografické vymezení shluku nehod ve formátu GeoJSON."),
   #filteraccidents_text = c(),
