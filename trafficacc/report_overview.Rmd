@@ -113,6 +113,16 @@ change_fce <- function(x1,x2){
     return(gr)
   }
 }
+
+p1_nrow <- params$data_accidents_p1 %>% 
+  nrow()
+
+if(p1_nrow != 0){
+  runrmd <- TRUE
+}else{
+  runrmd <- FALSE
+  print("V základním období nejsou žádné nehody.")
+}
 ```
 
 
@@ -133,6 +143,7 @@ change_fce <- function(x1,x2){
 - Počet lehce zraněných v dopravních nehodách `r format_integer(lwound_p1)`, změna `r change_fce(lwound_p1,lwound_p2)` oproti srovnávacímu období
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3}
+if(runrmd){
 casualties <- c(
   "casualties_pedestrian" = "chodec",
   "casualties_car_driver" = "řidič osobního\nvozidla",
@@ -216,10 +227,12 @@ p1 <- params$data_accidents_p1 |>
         legend.title = element_blank(),
         axis.title.y = element_blank()
       )
+}
 ```
 
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3}
+if(runrmd){
 faults <- c(
   "1"="řidičem motorového\nvozidla",
   "2"="řidičem nemotorového\nvozidla",
@@ -289,6 +302,7 @@ p1 <- params$data_accidents_p1 |>
         legend.title = element_blank(),
         axis.title.y = element_blank()
       )
+}
 ```
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3}
@@ -358,6 +372,7 @@ causes <- c(
 "615" = "jiná technická závada"
 )
 
+if(runrmd){
 params$data_accidents_p1 |>
       sf::st_drop_geometry() |>
       dplyr::select(
@@ -397,10 +412,19 @@ params$data_accidents_p1 |>
         legend.title = element_blank(),
         axis.title.y = element_blank()
       )
+}
 ```
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3}
-params$data_accidents_p1 |>
+if(runrmd){
+  
+aux <- params$data_accidents_p1 |>
+      sf::st_drop_geometry() |>
+      dplyr::filter(accident_dead > 0)
+  
+if(nrow(aux) != 0){
+
+aux |>
       sf::st_drop_geometry() |>
       dplyr::filter(accident_dead > 0) |>
       dplyr::select(
@@ -440,6 +464,8 @@ params$data_accidents_p1 |>
         legend.title = element_blank(),
         axis.title.y = element_blank()
       )
+}
+}
 ```
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3}
@@ -455,6 +481,8 @@ crashtype <- c(
 "9" = "havárie",
 "0" = "jiný druh nehody"
 )
+
+if(runrmd){
 
 p1 <- params$data_accidents_p1 |>
       sf::st_drop_geometry() |>
@@ -517,6 +545,7 @@ p1 <- params$data_accidents_p1 |>
         legend.title = element_blank(),
         axis.title.y = element_blank()
       )
+}
 ```
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3}
@@ -532,6 +561,8 @@ obstacletype <- c(
   "9" = "jiná překážka - plot,\nnásep, nástupní ostrůvek",
   "0" = "nepřichází v úvahu,\nnejde o srážku s pev.přek."
 )
+
+if(runrmd){
 
 p1 <- params$data_accidents_p1 |>
       sf::st_drop_geometry() |>
@@ -594,9 +625,12 @@ p1 <- params$data_accidents_p1 |>
         legend.title = element_blank(),
         axis.title.y = element_blank()
       )
+}
 ```
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3}
+if(runrmd){
+
 params$data_accidents_p1 |>
       sf::st_drop_geometry() |>
       tidyr::drop_na(driver_age) |>
@@ -633,12 +667,20 @@ params$data_accidents_p1 |>
         legend.title = element_blank(),
         axis.title.y = element_blank()
       )
+  
+}
 ```
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3}
-params$data_accidents_p1 |>
+if(runrmd){
+
+aux <- params$data_accidents_p1 |>
       sf::st_drop_geometry() |>
-      tidyr::drop_na(driver_age) |>
+      tidyr::drop_na(driver_age)
+  
+if(nrow(aux) != 0){
+
+aux |>
       dplyr::mutate(
         agecat = cut(driver_age, breaks = c(0,5,9,14,17,20,24,34,44,54,64,Inf))
       ) |>
@@ -671,10 +713,13 @@ params$data_accidents_p1 |>
         legend.title = element_blank(),
         axis.title.y = element_blank()
       )
+}
+}
 ```
 
 
 ```{r, echo=FALSE, fig.align='center', fig.height=3}
+if(runrmd){
     acc_plot <- 
       params$data_accidents_p1 |>
       dplyr::select(accident_date) |> 
@@ -778,5 +823,6 @@ params$data_accidents_p1 |>
         legend.title = element_text(size = 8),
         axis.text.x = element_text(size = 6)
       )
+}
 ```
 

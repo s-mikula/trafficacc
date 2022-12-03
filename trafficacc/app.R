@@ -124,7 +124,8 @@ ui <- dashboardPage(
                        box(
                          p(TITLE$report),
                          downloadButton("report_overview", "Report"),
-                         downloadButton("reportset", "Pravidelný reporting"),br(),
+                         uiOutput("reportset_button"),br(),
+                         #downloadButton("reportset", "Pravidelný reporting"),br(),
                          actionLink("help_report",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
                          status = "warning",
                          width = 12
@@ -3023,12 +3024,43 @@ server <- function(input, output, session) {
     }
   )
   
+  
+  output$reportset_button <- renderUI({
+    if(month(Sys.Date()) != 1){
+      downloadButton("reportset","Pravidelný reporting")
+    }else{
+      actionButton("january", "Pravidelný reporting")
+    }
+  })
+  
+  observeEvent(input$january, {
+    # Show a modal when the button is pressed
+    shinyalert("Chyba!", "Pravidelný reporting není během ledna dustupný.", type = "error")
+  })
+  
   output$reportset <- downloadHandler(
     filename = "reportset.zip",
     content = function(file) {
       
       rr_today <- Sys.Date()
-      day(rr_today) <- day(rr_today) - 365
+      day(rr_today) <- day(rr_today)
+      
+      # if(month(rr_today) == 12){
+      #   shinyalert("Chyba!", 
+      #              "Reporty obsahují srovnání nehod, které se staly od 1.1. do konce předcházejícího měsíce. Funkce není dostupná v průběhu ledna.", 
+      #              type = "error")
+      #   
+      #   stop("This is the end.")
+      # }
+      
+      
+      shinyalert("Pozor!", 
+                 "Generování sady reportů může trvat dlouhou dobu. Reporty obsahují srovnání nehod, které se staly od 1.1. do konce předcházejícího měsíce. Obsah reportu může být zásadně ovlivněn naplněností databáze. Hromadné generování není dostupné v průběhu ledna.", 
+                 type = "warning",
+                 inputId = "wait_reports",
+                 showConfirmButton = FALSE
+                 )
+      
       
       # First day of the year
       rr_period1_1 <- rr_today
@@ -3096,6 +3128,8 @@ server <- function(input, output, session) {
         )
         
       }
+      
+      closeAlert(num = 0, id = input$wait_reports)
       
       zip(
         zipfile = file,
