@@ -366,3 +366,7 @@ mpacc_choices <- list(
 )
 
 mpacc_box <- c("Zelený polygon na mapě odpovídá oblasti poslední vybrané nehodové lokality na tabu 'Nehodové lokality'. Uživatel může pomocí mapových nástrojů nakreslit vlastní polygon, který je zobrazen modrou barvou. Nehody lze podle obou polygonů filtrovat.")
+
+months_cz <- c("leden","únor","březen","duben","květen","červen",
+               "červenec","srpen","září","říjen","listopad","prosinec")
+days_cz <- c("pondělí","úterý","středa","čtvrtek","pátek","sobota","neděle")

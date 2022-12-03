@@ -21,7 +21,7 @@ library(leaflet, quietly = TRUE)
 library(leaflet.extras, quietly = TRUE)
 
 library(ggplot2, quietly = TRUE)
-library(ggside, quietly = TRUE)
+#library(ggside, quietly = TRUE)
 #library(ggvis, quietly = TRUE)
 library(rmarkdown, quietly = TRUE)
 library(OpenStreetMap, quietly = TRUE)

@@ -718,111 +718,176 @@ aux |>
 ```
 
 
-```{r, echo=FALSE, fig.align='center', fig.height=3}
+```{r, echo=FALSE, fig.align='center', fig.height=4}
 if(runrmd){
-    acc_plot <- 
-      params$data_accidents_p1 |>
-      dplyr::select(accident_date) |> 
-      sf::st_drop_geometry() |>
-      dplyr::group_by(accident_date) |> 
-      dplyr::summarise(obs = n()) %>%  
-      tidyr::complete(
-        accident_date = seq(from = min(.$accident_date), to = max(.$accident_date), by = 1),
-        fill = list(obs = 0)
-      ) |> 
-      dplyr::mutate(
-        day  = wday(accident_date, week_start = 1) %>% as.character(),
-        week = isoweek(accident_date) %>% as.character(),
-      ) |> 
-      dplyr::select(-accident_date) |> 
-      dplyr::group_by(week,day) |> 
-      dplyr::summarise(
+  
+  aux <- params$data_accidents_p1 %>% 
+      st_drop_geometry() %>% 
+      group_by(accident_date) %>% 
+      summarise(
+        obs = n(),
+        .groups = "drop"
+      ) %>% 
+      mutate(
+        wday = wday(accident_date, week_start = 1) %>% as.integer(),
+        month = month(accident_date) %>% as.integer(),
+        year = year(accident_date) %>% as.integer()
+      ) %>% 
+      group_by(year,month) %>% 
+      arrange(accident_date) %>% 
+      mutate(
+        lday = first(wday):(n()+first(wday)-1)
+      ) %>% 
+      group_by(wday,month,lday) %>% 
+      summarise(
         obs = sum(obs)/n(),
         .groups = "drop"
-      ) |> 
-      dplyr::mutate(
-        obs = 100*obs/sum(obs)
-      ) |> 
-      dplyr::mutate(
-        week = factor(week, levels = 1:54),
-        day = factor(day, levels = 1:7, 
-                     labels = c("pondělí","úterý","středa","čtvrtek","pátek","sobota","neděle"))
-      )
-    
-    xdata <- acc_plot |> 
-      group_by(week) |> 
-      summarise(
-        obs = sum(obs),
-        .groups = "drop"
-      ) |> 
+      ) %>% 
       mutate(
-        xobs = 100*obs/sum(obs)
-      ) |> 
-      select(-obs)
-    
-    ydata <- acc_plot |> 
-      group_by(day) |>
-      summarise(
-        obs = sum(obs),
-        .groups = "drop"
-      ) |> 
-      mutate(
-        yobs = 100*obs/sum(obs)
-      ) |>
-      select(-obs)
-    
-    acc_plot |>
+        obs = 100*obs/sum(obs),
+        month = factor(month, levels = 1:12, labels = months_cz)
+      ) 
+  
+  aux %>% 
       ggplot(
-        aes(x = week)
+        aes(x = lday, y = month, fill = obs)
       ) +
-      geom_tile(
-        aes(y=day, fill=obs)
+      geom_tile() +
+      geom_vline(
+        xintercept = c(7.5,14.5,21.5,28.5,35.5),
+        linetype = 2
       ) +
-      geom_xsidetile(
-        data = xdata,
-        aes(xfill = xobs, y = "celkem")
-      ) +
-      geom_ysidetile(
-        data = ydata,
-        aes(yfill = yobs, x = "celkem", y = day)
-      ) +
-      scale_fill_distiller(
-        "Za den v roce (%)",
-        palette = "OrRd",
-        direction = 1,
-        guide = guide_colorbar(order = 1)
-      ) +
-      scale_xfill_gradient(
-        "Za týden v roce (%)",
-        low = "#deebf7",
-        high = "#08306b"
-      ) +
-      scale_yfill_gradient(
-        "Za den v týdnu (%)",
-        low = "#deebf7",
-        high = "#08306b"
+      scale_x_continuous(
+        breaks = 1:37,
+        labels = rep(
+          days_cz,6
+        )[1:37]
       ) +
       scale_y_discrete(
-        limits = c("pondělí","úterý","středa","čtvrtek","pátek","sobota","neděle")
-      ) + 
-      scale_xsidey_discrete() +
-      scale_ysidex_discrete() +
-      scale_x_discrete(
-        "Týden v roce",
-        limits = as.character(1:53)
-      ) + 
-      labs(
-        title =  "Podíl dopravních nehod podle času (v základním období)"
+        limits = months_cz
       ) +
-      theme_classic(
-        base_size = 10
+      scale_fill_distiller(
+        "Podíl nehod (%)",
+        palette = "RdYlGn"
       ) +
+      # scale_fill_gradient2(
+      #   "Podíl nehod (%)",
+      #   low = "#313695",
+      #   mid = "#ffffbf",
+      #   high = "#a50026",
+      #   midpoint = median(aux$obs, na.rm = TRUE)
+      # ) +
+      theme_classic(base_size = 10) +
       theme(
-        axis.title.y = element_blank(),
-        legend.position = "bottom",
-        legend.title = element_text(size = 8),
-        axis.text.x = element_text(size = 6)
+        axis.text.y = element_text(size = 9),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5, size = 9),
+        axis.title = element_blank(),
+        legend.position = "bottom"
       )
+  
+    # acc_plot <- 
+    #   params$data_accidents_p1 |>
+    #   dplyr::select(accident_date) |> 
+    #   sf::st_drop_geometry() |>
+    #   dplyr::group_by(accident_date) |> 
+    #   dplyr::summarise(obs = n()) %>%  
+    #   tidyr::complete(
+    #     accident_date = seq(from = min(.$accident_date), to = max(.$accident_date), by = 1),
+    #     fill = list(obs = 0)
+    #   ) |> 
+    #   dplyr::mutate(
+    #     day  = wday(accident_date, week_start = 1) %>% as.character(),
+    #     week = isoweek(accident_date) %>% as.character(),
+    #   ) |> 
+    #   dplyr::select(-accident_date) |> 
+    #   dplyr::group_by(week,day) |> 
+    #   dplyr::summarise(
+    #     obs = sum(obs)/n(),
+    #     .groups = "drop"
+    #   ) |> 
+    #   dplyr::mutate(
+    #     obs = 100*obs/sum(obs)
+    #   ) |> 
+    #   dplyr::mutate(
+    #     week = factor(week, levels = 1:54),
+    #     day = factor(day, levels = 1:7, 
+    #                  labels = c("pondělí","úterý","středa","čtvrtek","pátek","sobota","neděle"))
+    #   )
+    # 
+    # xdata <- acc_plot |> 
+    #   group_by(week) |> 
+    #   summarise(
+    #     obs = sum(obs),
+    #     .groups = "drop"
+    #   ) |> 
+    #   mutate(
+    #     xobs = 100*obs/sum(obs)
+    #   ) |> 
+    #   select(-obs)
+    # 
+    # ydata <- acc_plot |> 
+    #   group_by(day) |>
+    #   summarise(
+    #     obs = sum(obs),
+    #     .groups = "drop"
+    #   ) |> 
+    #   mutate(
+    #     yobs = 100*obs/sum(obs)
+    #   ) |>
+    #   select(-obs)
+    # 
+    # acc_plot |>
+    #   ggplot(
+    #     aes(x = week)
+    #   ) +
+    #   geom_tile(
+    #     aes(y=day, fill=obs)
+    #   ) +
+    #   geom_xsidetile(
+    #     data = xdata,
+    #     aes(xfill = xobs, y = "celkem")
+    #   ) +
+    #   geom_ysidetile(
+    #     data = ydata,
+    #     aes(yfill = yobs, x = "celkem", y = day)
+    #   ) +
+    #   scale_fill_distiller(
+    #     "Za den v roce (%)",
+    #     palette = "OrRd",
+    #     direction = 1,
+    #     guide = guide_colorbar(order = 1)
+    #   ) +
+    #   scale_xfill_gradient(
+    #     "Za týden v roce (%)",
+    #     low = "#deebf7",
+    #     high = "#08306b"
+    #   ) +
+    #   scale_yfill_gradient(
+    #     "Za den v týdnu (%)",
+    #     low = "#deebf7",
+    #     high = "#08306b"
+    #   ) +
+    #   scale_y_discrete(
+    #     limits = c("pondělí","úterý","středa","čtvrtek","pátek","sobota","neděle")
+    #   ) + 
+    #   scale_xsidey_discrete() +
+    #   scale_ysidex_discrete() +
+    #   scale_x_discrete(
+    #     "Týden v roce",
+    #     limits = as.character(1:53)
+    #   ) + 
+    #   labs(
+    #     title =  "Podíl dopravních nehod podle času (v základním období)"
+    #   ) +
+    #   theme_classic(
+    #     base_size = 10
+    #   ) +
+    #   theme(
+    #     axis.title.y = element_blank(),
+    #     legend.position = "bottom",
+    #     legend.title = element_text(size = 8),
+    #     axis.text.x = element_text(size = 6)
+    #   )
 }
 ```
 
