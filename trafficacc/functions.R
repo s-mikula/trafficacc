@@ -24,7 +24,7 @@ library(ggplot2, quietly = TRUE)
 #library(ggside, quietly = TRUE)
 #library(ggvis, quietly = TRUE)
 library(rmarkdown, quietly = TRUE)
-library(OpenStreetMap, quietly = TRUE)
+#library(OpenStreetMap, quietly = TRUE)
 #library(geojsonsf, quietly = TRUE)
 
 
