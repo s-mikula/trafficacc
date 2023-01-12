@@ -4,6 +4,12 @@ source("dictionary.R")
 
 OPTIONS <- list_options()
 
+MAXIMUM_DATE <- 
+  OPTIONS$period_end %>% 
+  lubridate::as_date() %>% 
+  max() %>% 
+  first()
+
 PERIOD_preselected <- OPTIONS |> 
   dplyr::slice_max(period_end, n = 1L) |>
   dplyr::slice(1L) |>
@@ -74,10 +80,10 @@ ui <- dashboardPage(
                          dateRangeInput(
                            "menu_period",
                            TITLE$base_period,
-                           start = str_c(year(today())-1,"-01-01"),
-                           end = str_c(year(today())-1,"-12-31"),
+                           start = str_c(year(MAXIMUM_DATE),"-01-01"),
+                           end = str_c(year(MAXIMUM_DATE),"-12-31"),
                            min = MINIMUM_DATE,
-                           max = str_c(year(today()),"-12-31"),
+                           max = MAXIMUM_DATE,
                            format = "dd.mm.yyyy",
                            language = "cs",
                            separator = TITLE$period_separator,
@@ -93,10 +99,10 @@ ui <- dashboardPage(
                          dateRangeInput(
                            "menu_period2",
                            label = NULL,
-                           start = max(OPTIONS$period_start),
-                           end = max(OPTIONS$period_end),
+                           start = str_c(year(MAXIMUM_DATE)-1,"-01-01"),
+                           end = str_c(year(MAXIMUM_DATE)-1,"-12-31"),
                            min = MINIMUM_DATE,
-                           max = max(OPTIONS$period_end),
+                           max = MAXIMUM_DATE,
                            format = "dd.mm.yyyy",
                            language = "cs",
                            separator = TITLE$period_separator,
@@ -2774,6 +2780,10 @@ server <- function(input, output, session) {
       addProviderTiles('Esri.WorldImagery', group = "Satelite") |>
       addPolygons(
         fill = FALSE
+      ) %>% 
+      addPolygons(
+        fill = FALSE,
+        data = get_map_orp()
       ) %>% 
       addPolygons(
         fill = FALSE,
