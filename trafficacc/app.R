@@ -23,7 +23,7 @@ map_districts <-
 
 map_orp <- 
   readr::read_rds(
-    stringr::str_c(APPDATA_REPOSITORY,"orp.rds")
+    stringr::str_c(APPDATA_REPOSITORY,"orps.rds")
   ) %>% 
   sf::st_transform(4326)
 
@@ -2182,6 +2182,11 @@ server <- function(input, output, session) {
         fill = FALSE
       ) |> 
       addPolygons(
+        fill = FALSE,
+        data = get_map_orp(),
+        weight = 2
+      ) %>% 
+      addPolygons(
         data = get_clusterPOLY(),
         fillColor = "blue",
         color = "#31a354",
@@ -2783,7 +2788,8 @@ server <- function(input, output, session) {
       ) %>% 
       addPolygons(
         fill = FALSE,
-        data = get_map_orp()
+        data = get_map_orp(),
+        weight = 2
       ) %>% 
       addPolygons(
         fill = FALSE,
