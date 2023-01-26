@@ -20,13 +20,7 @@ library(tidyr, quietly = TRUE)
 library(lubridate, quietly = TRUE)
 library(purrr, quietly = TRUE)
 library(stringr, quietly = TRUE)
-# library(sf, quietly = TRUE)
-# library(fs, quietly = TRUE)
-# library(readr, quietly = TRUE)
 library(ggplot2, quietly = TRUE)
-#library(tmap, quietly = TRUE)
-#library(tmaptools, quietly = TRUE)
-# library(OpenStreetMap, quietly = TRUE)
 library(knitr, quietly = TRUE)
 library(leaflet, quietly = TRUE)
 ```
@@ -144,7 +138,7 @@ sidecar <- params$sidecar |>
       # PROFILEDESC$NKDE_TRIM_BW, sidecar$NKDE_TRIM_BW
     ) |>
     kable(
-      col.names = c("Paramter","Nastavení"),
+      col.names = c("Parametr","Nastavení"),
       align = "lr",
       caption = "Nastavení profilu a výpočtu shluků nehod"
     )

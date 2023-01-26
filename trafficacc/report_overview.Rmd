@@ -23,8 +23,6 @@ library(sf, quietly = TRUE)
 library(fs, quietly = TRUE)
 library(readr, quietly = TRUE)
 library(ggplot2, quietly = TRUE)
-#library(ggside, quietly = TRUE)
-#library(maptiles)
 ```
 
 ```{r, echo=FALSE}

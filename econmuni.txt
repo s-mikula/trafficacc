@@ -1,0 +1,3 @@
+KykyrieMUNI2023
+
+rsconnect::setAccountInfo(name='econmuni', token='0D37FB76A61EBFFF8AA6B4DCDF680A4F', secret='Zy9KvtzQe9bxjpTKzKiLR1pEqHvaLHtoBtDFRY4o')
