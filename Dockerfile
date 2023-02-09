@@ -1,12 +1,13 @@
 FROM rocker/r-ver:4.2.2
-#upgrade Ubuntu packages
+# upgrade Ubuntu packages
 RUN apt update
 RUN apt upgrade -y
 
-#useful tools
-RUN apt install -y apt-utils apt-file iproute2 iputils-ping libc-bin screen vim
+# useful tools
+RUN apt install -y apt-utils apt-file iproute2 iputils-ping libc-bin # screen vim
 
-#snippet from /rocker_scripts/install_geospatial.sh with Ubuntu prerequisites only
+# install necessary packages
+# snippet from /rocker_scripts/install_geospatial.sh with Ubuntu prerequisites only
 RUN apt install -y \
 gdal-bin \
 lbzip2 \
@@ -39,21 +40,27 @@ RUN /bin/sh -c /rocker_scripts/install_shiny_server.sh
 
 WORKDIR /srv/shiny-server
 RUN rm -rf *
-#renv restore
+
+# install renv
 ENV RENV_VERSION=0.16.0
 RUN R -e "install.packages('remotes', repos = c(CRAN = 'https://cloud.r-project.org'))"
 RUN R -e "remotes::install_github('rstudio/renv@${RENV_VERSION}')"
 
-#copy the renv
-COPY renv/ ./renv
-COPY renv.lock .Rprofile .
+# copy renv files
+COPY renv.lock renv.lock
+RUN mkdir -p renv
+COPY .Rprofile .Rprofile
+COPY renv/activate.R renv/activate.R
+COPY renv/settings.dcf renv/settings.dcf
+
+# restore R packages
 RUN R -e "renv::restore()"
 #this is mandatory to make renv work inside shiny - https://community.rstudio.com/t/shiny-server-renv/71879/5
 RUN R -e "renv::isolate()"
 
-#useful tools
-COPY Docker/.vimrc Docker/.screenrc /root/
-COPY Docker/findgrep /usr/local/bin/
+# useful tools
+# COPY Docker/.vimrc Docker/.screenrc /root/
+# COPY Docker/findgrep /usr/local/bin/
 
 #copy the application itself at the very end
 COPY trafficacc/ .
