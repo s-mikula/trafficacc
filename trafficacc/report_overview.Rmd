@@ -25,6 +25,7 @@ library(readr, quietly = TRUE)
 library(ggplot2, quietly = TRUE)
 ```
 
+
 ```{r, echo=FALSE}
 p1_start <- params$period[1]
 p1_end   <- params$period[2]
