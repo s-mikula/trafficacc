@@ -1872,8 +1872,16 @@ server <- function(input, output, session) {
           everything(),
           as.character
         )
-      )
-      
+      ) 
+    
+    sidecar <- tibble(
+      name = names(PROFILEDESC)[!names(PROFILEDESC) %in% names(sidecar)],
+      value = ""
+    ) %>% 
+      pivot_wider() %>% 
+      bind_cols(sidecar,.)
+    
+    
     
     tibble::tribble(
       ~label, ~value,
@@ -1884,6 +1892,10 @@ server <- function(input, output, session) {
       PROFILEDESC$UNIT_COST_SERIOUS_INJURY, sidecar$UNIT_COST_SERIOUS_INJURY, 
       PROFILEDESC$UNIT_COST_LIGHT_INJURY, sidecar$UNIT_COST_LIGHT_INJURY, 
       PROFILEDESC$UNIT_COST_MATERIAL, sidecar$UNIT_COST_MATERIAL, 
+      PROFILEDESC$CONST_COST_DEAD, sidecar$CONST_COST_DEAD,
+      PROFILEDESC$CONST_COST_SERIOUS_INJURY, sidecar$CONST_COST_SERIOUS_INJURY,
+      PROFILEDESC$CONST_COST_LIGHT_INJURY, sidecar$CONST_COST_LIGHT_INJURY,
+      PROFILEDESC$CONST_COST_MATERIAL, sidecar$CONST_COST_MATERIAL,
       #PROFILEDESC$UNIT_COST_SERIOUS_INJURY, sidecar$UNIT_COST_SERIOUS_INJURY,
       #PROFILEDESC$ACCIDENT_TO_ROAD_MAX_DISTANCE, sidecar$ACCIDENT_TO_ROAD_MAX_DISTANCE, 
       #PROFILEDESC$DISTRICT_BUFFER_SIZE, sidecar$DISTRICT_BUFFER_SIZE, 

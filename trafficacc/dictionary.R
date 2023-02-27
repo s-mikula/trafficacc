@@ -289,6 +289,10 @@ PROFILEDESC <- list(
   UNIT_COST_SERIOUS_INJURY = "koeficient hodnoty vážného zranění v mil. Kč",
   UNIT_COST_LIGHT_INJURY = "koeficient hodnoty lehkého zranění v mil. Kč",
   UNIT_COST_MATERIAL = "koeficient hodnoty materiálních škod (násobitel)",
+  CONST_COST_DEAD = "jednotková váha nehody, kde je někdo zahynul",
+  CONST_COST_SERIOUS_INJURY = "jednotková váha nehody, kde je nejhorším následkem těžké zranění",
+  CONST_COST_LIGHT_INJURY = "jednotková váha nehody, kde je nejhorším následkem lehké zranění",
+  CONST_COST_MATERIAL = "jednotková váha nehody, kde je nejhorším následkem materiální škoda",
   ACCIDENT_TO_ROAD_MAX_DISTANCE = "",
   DISTRICT_BUFFER_SIZE = "",
   LIXEL_SIZE = "typická délka lixelů v metrech",
@@ -300,6 +304,16 @@ PROFILEDESC <- list(
   NKDE_ADAPTIVE = "je největší možný rozliv stanoven adaptivně?",
   NKDE_TRIM_BW = "maximální povolený rozliv vlivu nehod při adaptivním stanovení rozlivu"
 )
+
+# CONST_COST_DEAD -- a fixed cost in mil. CZK added to accidents where someone lost her life -- jednotková váha nehody, kde je někdo zahynul
+# CONST_COST_SERIOUS_INJURY -- a fixed cost in mil. CZK added to accidents where the worst damage was serious injury -- jednotková váha nehody, kde je nejhorším následkem těžké zranění
+# CONST_COST_LIGHT_INJURY -- a fixed cost in mil. CZK added to accidents where the worst damage was light injury -- jednotková váha nehody, kde je nejhorším následkem lehké zranění
+# CONST_COST_MATERIAL -- a fixed cost in mil. CZK added to accidents with material cost only (m2) -- jednotková váha nehody, kde je nejhorším následkem materiální škoda
+# 
+# CONST_COST_DEAD = "jednotková váha nehody, kde je někdo zahynul",
+# CONST_COST_SERIOUS_INJURY = "jednotková váha nehody, kde je nejhorším následkem těžké zranění",
+# CONST_COST_LIGHT_INJURY = "jednotková váha nehody, kde je nejhorším následkem lehké zranění",
+# CONST_COST_MATERIAL = "jednotková váha nehody, kde je nejhorším následkem materiální škoda"
 
 AUTHORS <- list(
     line1 = "Vývoj webové aplikace a software na identifikaci klastrů nehod na silniční síti byl podpořen grantem TA ČR (CK01000049): ",
