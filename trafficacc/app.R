@@ -1881,7 +1881,12 @@ server <- function(input, output, session) {
       pivot_wider() %>% 
       bind_cols(sidecar,.)
     
-    
+    sidecar <- tibble(
+      name = names(PROFILEDESC)[!names(PROFILEDESC) %in% names(sidecar)],
+      value = ""
+    ) %>% 
+      pivot_wider() %>% 
+      bind_cols(sidecar,.)
     
     tibble::tribble(
       ~label, ~value,
