@@ -14,7 +14,7 @@ usage() {
 }
 
 # implicit values
-IMAGE="smikula/trafficacc:latest"
+IMAGE="smikula/trafficacc:public"
 DATAFOLDER="$(pwd)"
 CONTAINERNAME=""
 CONTAINERARGS=""
