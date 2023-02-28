@@ -4,11 +4,14 @@ source("dictionary.R")
 
 OPTIONS <- list_options()
 
-MAXIMUM_DATE <- 
-  OPTIONS$period_end %>% 
-  lubridate::as_date() %>% 
-  max() %>% 
-  first()
+# MAXIMUM_DATE <- 
+#   OPTIONS$period_end %>% 
+#   lubridate::as_date() %>% 
+#   max() %>% 
+#   first()
+
+# Just for the public app
+MAXIMUM_DATE <- lubridate::as_date("2022-12-31")
 
 PERIOD_preselected <- OPTIONS |> 
   dplyr::slice_max(period_end, n = 1L) |>
@@ -21,11 +24,11 @@ map_districts <-
   ) %>% 
   sf::st_transform(4326)
 
-map_orp <- 
-  readr::read_rds(
-    stringr::str_c(APPDATA_REPOSITORY,"orps.rds")
-  ) %>% 
-  sf::st_transform(4326)
+# map_orp <- 
+#   readr::read_rds(
+#     stringr::str_c(APPDATA_REPOSITORY,"orps.rds")
+#   ) %>% 
+#   sf::st_transform(4326)
 
 # Define UI for application that draws a histogram
 #### UI ####
@@ -50,6 +53,14 @@ ui <- dashboardPage(
         multiple = FALSE,
         width = '100%'
       ),
+      # switchInput(
+      #   "lang_switch",
+      #   label = "<i class=\"fa-solid fa-language\"></i>",
+      #   offLabel = "CZE",
+      #   onLabel = "ENG",
+      #   width = '100%',
+      #   value = FALSE
+      # ),
       img(src='muni-lg-white.png', align = "center", width = "100%"),br(),
       img(src='muni-lg-cze-black.png', align = "center", width = "100%"),br(),
       img(src='cuni.png', align = "center", width = "100%"),br(),
@@ -75,13 +86,13 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(3,
+                column(5,
                        box(
                          dateRangeInput(
                            "menu_period",
                            TITLE$base_period,
                            start = str_c(year(MAXIMUM_DATE),"-01-01"),
-                           end = str_c(year(MAXIMUM_DATE),"-12-31"),
+                           end = MAXIMUM_DATE,#str_c(year(MAXIMUM_DATE),"-12-31"),
                            min = MINIMUM_DATE,
                            max = MAXIMUM_DATE,
                            format = "dd.mm.yyyy",
@@ -125,18 +136,18 @@ ui <- dashboardPage(
                          status = "warning",
                          width = 12
                        )
-                ),
-                column(2,
-                       box(
-                         p(TITLE$report),
-                         downloadButton("report_overview", "Report"),
-                         uiOutput("reportset_button"),br(),
-                         #downloadButton("reportset", "Pravidelný reporting"),br(),
-                         actionLink("help_report",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
-                         status = "warning",
-                         width = 12
-                       )
-                )
+                )#,
+                # column(2,
+                #        box(
+                #          p(TITLE$report),
+                #          downloadButton("report_overview", "Report"),
+                #          uiOutput("reportset_button"),br(),
+                #          #downloadButton("reportset", "Pravidelný reporting"),br(),
+                #          actionLink("help_report",TITLE$help,icon = icon("circle-info", lib="font-awesome")),
+                #          status = "warning",
+                #          width = 12
+                #        )
+                # )
               ),
               fluidRow(
                 column(3,
@@ -259,7 +270,7 @@ ui <- dashboardPage(
       ##### UI: Hotspots #####
       tabItem(tabName = "hotspots",
               fluidRow(
-                column(5,
+                column(6,
                        box(
                          selectInput(
                            "menu_period_hotspots",
@@ -287,7 +298,7 @@ ui <- dashboardPage(
                 #          width = 12
                 #        )
                 # ),
-                column(2,
+                column(3,
                        box(
                          sliderInput(
                            "menu_quantile",
@@ -304,7 +315,7 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(2,
+                column(3,
                        box(
                          sliderInput(
                            "menu_spill",
@@ -320,16 +331,16 @@ ui <- dashboardPage(
                          status = "warning",
                          width = 12
                        )
-                ),
-                column(3,
-                       box(
-                         p(TITLE$note_report),
-                         downloadButton("report_cluster", "Report"),
-                         downloadButton("downloadPOLY", "GeoJSON"),
-                         status = "warning",
-                         width = 12
-                       )
-                       )
+                )#,
+                # column(3,
+                #        box(
+                #          p(TITLE$note_report),
+                #          downloadButton("report_cluster", "Report"),
+                #          downloadButton("downloadPOLY", "GeoJSON"),
+                #          status = "warning",
+                #          width = 12
+                #        )
+                #        )
               ),
       fluidRow(
         column(6,
@@ -419,10 +430,10 @@ ui <- dashboardPage(
                          dateRangeInput(
                            "menu_period_accidents",
                            TITLE$base_period_fixed,
-                           start = str_c(year(today())-1,"-01-01"),
-                           end = str_c(year(today())-1,"-12-31"),
+                           start = "2021-01-01",#str_c(year(today())-1,"-01-01"),
+                           end = MAXIMUM_DATE,#str_c(year(today())-1,"-12-31"),
                            min = MINIMUM_DATE,
-                           max = str_c(year(today()),"-12-31"),
+                           max = MAXIMUM_DATE,#str_c(year(today()),"-12-31"),
                            format = "dd.mm.yyyy",
                            language = "cs",
                            separator = " do ",
@@ -432,7 +443,7 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(2,
+                column(3,
                        box(
                          selectInput(
                            "menu_filteraccidents_accidents",
@@ -446,7 +457,7 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(2,
+                column(3,
                        box(
                          TITLE$filter_cluster,
                          actionLink("cluster_zoom","Zoom",icon = icon("magnifying-glass-location", lib="font-awesome")),
@@ -461,7 +472,7 @@ ui <- dashboardPage(
                          width = 12
                        )
                 ),
-                column(2,
+                column(3,
                        box(
                          TITLE$filter_polygon,
                          actionLink("polygon_zoom","Zoom",icon = icon("magnifying-glass-location", lib="font-awesome")),
@@ -475,16 +486,16 @@ ui <- dashboardPage(
                          status = "warning",
                          width = 12
                        )
-                ),
-                column(3,
-                       box(
-                         p(TITLE$note_report),
-                         downloadButton("report_accidents", "Report"),
-                         downloadButton("downloadID", "ID nehod"),
-                         status = "warning",
-                         width = 12
-                       )
-                       )
+                )#,
+                # column(3,
+                #        box(
+                #          p(TITLE$note_report),
+                #          downloadButton("report_accidents", "Report"),
+                #          downloadButton("downloadID", "ID nehod"),
+                #          status = "warning",
+                #          width = 12
+                #        )
+                #        )
               ),
               fluidRow(
                 column(7,
@@ -572,6 +583,23 @@ server <- function(input, output, session) {
   #     footer = modalButton("Rozumím. Přejít na aplikaci.")
   #   ))
   # })
+  
+  observeEvent(once = TRUE, ignoreNULL = FALSE, ignoreInit = FALSE, eventExpr = input$click, {
+    showModal(modalDialog(
+      title = "Aplikace pro interaktivní analýzu dopravních nehod a nehodových míst",
+      p("Toto je ukázková verze aplikace, která byla vyvinuta pro potřeby Policie ČR v rámci projektu 'TA ČR (CK01000049): Tvorba pokročilých nástrojů pro analýzu dopravních nehod pro Policii ČR'."),
+      p("Aplikace je primárně určena pro dopravní experty, kteří dokážou údaje správně interpretovat. Ukázková verze aplikace obsahuje pouze vybrané údaje, které striktně vycházejí z veřejně dostupných dat."),
+      h4("Co aplikace umí?"),
+      p("1. Ukazuje statistiky dopravních nehod pro zvolené okresy."),
+      p("2. Vytipovává a ukazuje potenciálně problematická místa na silniční síti v ČR."),
+      p("3. Umožňuje základní interaktivní analýzu dopravních nehod."),
+      h4("Kontakty"),
+      p("Aplikaci a výpočet identifikující shluky dopravních nehod (potenciálně problematická místa na silniční síti) vyvinuli Michal Kvasnička (michal.kvasnicka@econ.muni.cz) a Štěpán Mikula (stepan.mikula@econ.muni.cz) z Masarykovy univerzity (MUNI)."),
+      h4("Upozornění"),
+      p("Aplikace má primárně sloužit jako podpůrný nástroj pro expertní rozhodování. Prezentovaná data vyžadují odbornou interpretaci. Autoři aplikace nenesou odpovědnost za použití aplikace a prezentovaných výstupů a dat."),
+      footer = modalButton("Rozumím. Přejít na aplikaci.")
+    ))
+  })
   
   ##### Help #####
   
@@ -1872,15 +1900,14 @@ server <- function(input, output, session) {
           everything(),
           as.character
         )
-      ) 
-    
+      )
+      
     sidecar <- tibble(
       name = names(PROFILEDESC)[!names(PROFILEDESC) %in% names(sidecar)],
       value = ""
     ) %>% 
       pivot_wider() %>% 
       bind_cols(sidecar,.)
-    
     
     tibble::tribble(
       ~label, ~value,
@@ -1907,7 +1934,7 @@ server <- function(input, output, session) {
       #PROFILEDESC$SUPPORTED_ROAD_CLASSES, sidecar$SUPPORTED_ROAD_CLASSES,
       PROFILEDESC$NKDE_TRIM_BW, sidecar$NKDE_TRIM_BW
     )
-  })
+    })
   
   output$box_acc_n_hot <- renderValueBox({
     if(length(input$menu_cluster) == 0){
@@ -2192,11 +2219,11 @@ server <- function(input, output, session) {
       addPolygons(
         fill = FALSE
       ) |> 
-      addPolygons(
-        fill = FALSE,
-        data = get_map_orp(),
-        weight = 2
-      ) %>% 
+      # addPolygons(
+      #   fill = FALSE,
+      #   data = get_map_orp(),
+      #   weight = 2
+      # ) %>% 
       addPolygons(
         data = get_clusterPOLY(),
         fillColor = "blue",
@@ -2758,11 +2785,11 @@ server <- function(input, output, session) {
       st_geometry()
   })
   
-  get_map_orp <- reactive({
-    map_orp |>
-      filter(district_id == input$menu_district) |>
-      st_geometry()
-  })
+  # get_map_orp <- reactive({
+  #   map_orp |>
+  #     filter(district_id == input$menu_district) |>
+  #     st_geometry()
+  # })
   
   output$mpacc <- renderLeaflet({
     
@@ -2797,11 +2824,11 @@ server <- function(input, output, session) {
       addPolygons(
         fill = FALSE
       ) %>% 
-      addPolygons(
-        fill = FALSE,
-        data = get_map_orp(),
-        weight = 2
-      ) %>% 
+      # addPolygons(
+      #   fill = FALSE,
+      #   data = get_map_orp(),
+      #   weight = 2
+      # ) %>% 
       addPolygons(
         fill = FALSE,
         layerId = "selectedPOLY",
@@ -3040,197 +3067,197 @@ server <- function(input, output, session) {
   
   #### Reports ####
   
-  output$report_overview <- downloadHandler(
-    filename = "report_ovr.html",
-    content = function(file) {
-      tempReport <- file.path(tempdir(), "report_overview.Rmd")
-      file.copy("report_overview.Rmd", tempReport, overwrite = TRUE)
-
-      # Set up parameters to pass to Rmd document
-      params <- list(
-        district = names(MENU$district)[MENU$district == input$menu_district],
-        data_accidents_p1 = get_accidents_p1(),
-        data_accidents_p2 = get_accidents_p2(),
-        period = input$menu_period,
-        period_user = input$menu_period2_user,
-        period2 = input$menu_period2,
-        accfilter = input$menu_filteraccidents
-      )
-
-      rmarkdown::render(tempReport, output_file = file,
-                        params = params,
-                        envir = new.env(parent = globalenv())
-      )
-    }
-  )
-  
-  output$report_accidents <- downloadHandler(
-    filename = "report_acc.html",
-    content = function(file) {
-      tempReport <- file.path(tempdir(), "report_accidents.Rmd")
-      file.copy("report_accidents.Rmd", tempReport, overwrite = TRUE)
-      
-      # Set up parameters to pass to Rmd document
-      params <- list(
-        data_accidents = get_accidents_box(),
-        period = input$menu_period_accidents,
-        accfilter = input$menu_filteraccidents_accidents
-      )
-      
-      rmarkdown::render(tempReport, output_file = file,
-                        params = params,
-                        envir = new.env(parent = globalenv())
-      )
-    }
-  )
-  
-  output$report_cluster <- downloadHandler(
-    filename = "report_clu.html",
-    content = function(file) {
-      tempReport <- file.path(tempdir(), "report_cluster.Rmd")
-      file.copy("report_cluster.Rmd", tempReport, overwrite = TRUE)
-      
-      # Set up parameters to pass to Rmd document
-      params <- list(
-        data_clusters = get_clusters(),
-        all_accidents = get_accidents_district(),
-        cluster_id = input$menu_cluster,
-        period = input$menu_period_hotspots,
-        quantile = input$menu_quantile,
-        spill = input$menu_spill,
-        sidecar = read_sidecar(
-          district = input$menu_district,
-          #profile = input$menu_profile,
-          profile = first(OPTIONS$profile[OPTIONS$period_menu == input$menu_period_hotspots]),
-          period_start = first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period_hotspots]),
-          period_end = first(OPTIONS$period_end[OPTIONS$period_menu == input$menu_period_hotspots])
-        ),
-        sidecardesc = PROFILEDESC
-        #profile = names(MENU$profile[MENU$profile == input$menu_profile])
-      )
-      
-      rmarkdown::render(tempReport, output_file = file,
-                        params = params,
-                        envir = new.env(parent = globalenv())
-      )
-    }
-  )
-  
-  
-  output$reportset_button <- renderUI({
-    if(month(Sys.Date()) != 1){
-      downloadButton("reportset","Hromadný reporting")
-    }else{
-      actionButton("january", "Hromadný reporting")
-    }
-  })
-  
-  observeEvent(input$january, {
-    # Show a modal when the button is pressed
-    shinyalert("Chyba!", "Hromadný reporting není během ledna dustupný.", type = "error")
-  })
-  
-  output$reportset <- downloadHandler(
-    filename = "reportset.zip",
-    content = function(file) {
-      
-      rr_today <- Sys.Date()
-      day(rr_today) <- day(rr_today)
-      
-      # if(month(rr_today) == 12){
-      #   shinyalert("Chyba!", 
-      #              "Reporty obsahují srovnání nehod, které se staly od 1.1. do konce předcházejícího měsíce. Funkce není dostupná v průběhu ledna.", 
-      #              type = "error")
-      #   
-      #   stop("This is the end.")
-      # }
-      
-      
-      shinyalert("Pozor!", 
-                 "Generování sady reportů může trvat dlouhou dobu. Reporty obsahují srovnání nehod, které se staly od 1.1. do konce předcházejícího měsíce. Obsah reportu může být zásadně ovlivněn naplněností databáze. Hromadné generování není dostupné v průběhu ledna.", 
-                 type = "warning",
-                 inputId = "wait_reports",
-                 showConfirmButton = FALSE
-                 )
-      
-      
-      # First day of the year
-      rr_period1_1 <- rr_today
-      month(rr_period1_1) <- 1
-      day(rr_period1_1) <- 1
-      
-      # Last day of the previous month
-      rr_period1_2 <- rr_today
-      day(rr_period1_2) <- 1
-      day(rr_period1_2) <- day(rr_period1_2) - 1
-      
-      # Baseline period (p1)
-      rr_period1 <- c(rr_period1_1,rr_period1_2)
-      
-      # Comparison period (p2)
-      rr_period2 <- rr_period1
-      year(rr_period2[1]) <- year(rr_period2[1]) - 1
-      year(rr_period2[2]) <- year(rr_period2[2]) - 1
-      
-      
-      rr_districts <- 
-        OPTIONS %>% 
-        distinct(district) %>% 
-        pull(district)
-      
-      
-      tmpdir_path <- tempdir()
-      
-      for(loop_dist in rr_districts){
-        
-        accp1 <- read_rds(
-          str_c(ACCIDENTS_REPOSITORY,"accidents_",loop_dist,".rds")
-        ) %>% 
-          filter(
-            accident_date >= rr_period1[1],
-            accident_date <= rr_period1[2]
-          )
-        
-        accp2 <- read_rds(
-          str_c(ACCIDENTS_REPOSITORY,"accidents_",loop_dist,".rds")
-        ) %>% 
-          filter(
-            accident_date >= rr_period2[1],
-            accident_date <= rr_period2[2]
-          )
-        
-        params <- list(
-          district = names(MENU$district)[MENU$district == loop_dist],
-          data_accidents_p1 = accp1,
-          data_accidents_p2 = accp2,
-          period = rr_period1,
-          period_user = FALSE,
-          period2 = rr_period2,
-          accfilter = input$menu_filteraccidents
-        )
-        
-        
-        tempReport <- file.path(tmpdir_path, "report_overview.Rmd")
-        file.copy("report_overview.Rmd", tempReport, overwrite = TRUE)
-        
-        
-        rmarkdown::render(tempReport, output_file = file.path(tmpdir_path, str_c(loop_dist,"_overview.html")),
-                          params = params,
-                          envir = new.env(parent = globalenv())
-        )
-        
-      }
-      
-      closeAlert(num = 0, id = input$wait_reports)
-      
-      zip(
-        zipfile = file,
-        list.files(path = tmpdir_path, pattern = ".html", full.names = TRUE), 
-        extras = '-j'
-      )
-      
-    }
-  )
+  # output$report_overview <- downloadHandler(
+  #   filename = "report_ovr.html",
+  #   content = function(file) {
+  #     tempReport <- file.path(tempdir(), "report_overview.Rmd")
+  #     file.copy("report_overview.Rmd", tempReport, overwrite = TRUE)
+  # 
+  #     # Set up parameters to pass to Rmd document
+  #     params <- list(
+  #       district = names(MENU$district)[MENU$district == input$menu_district],
+  #       data_accidents_p1 = get_accidents_p1(),
+  #       data_accidents_p2 = get_accidents_p2(),
+  #       period = input$menu_period,
+  #       period_user = input$menu_period2_user,
+  #       period2 = input$menu_period2,
+  #       accfilter = input$menu_filteraccidents
+  #     )
+  # 
+  #     rmarkdown::render(tempReport, output_file = file,
+  #                       params = params,
+  #                       envir = new.env(parent = globalenv())
+  #     )
+  #   }
+  # )
+  # 
+  # output$report_accidents <- downloadHandler(
+  #   filename = "report_acc.html",
+  #   content = function(file) {
+  #     tempReport <- file.path(tempdir(), "report_accidents.Rmd")
+  #     file.copy("report_accidents.Rmd", tempReport, overwrite = TRUE)
+  #     
+  #     # Set up parameters to pass to Rmd document
+  #     params <- list(
+  #       data_accidents = get_accidents_box(),
+  #       period = input$menu_period_accidents,
+  #       accfilter = input$menu_filteraccidents_accidents
+  #     )
+  #     
+  #     rmarkdown::render(tempReport, output_file = file,
+  #                       params = params,
+  #                       envir = new.env(parent = globalenv())
+  #     )
+  #   }
+  # )
+  # 
+  # output$report_cluster <- downloadHandler(
+  #   filename = "report_clu.html",
+  #   content = function(file) {
+  #     tempReport <- file.path(tempdir(), "report_cluster.Rmd")
+  #     file.copy("report_cluster.Rmd", tempReport, overwrite = TRUE)
+  #     
+  #     # Set up parameters to pass to Rmd document
+  #     params <- list(
+  #       data_clusters = get_clusters(),
+  #       all_accidents = get_accidents_district(),
+  #       cluster_id = input$menu_cluster,
+  #       period = input$menu_period_hotspots,
+  #       quantile = input$menu_quantile,
+  #       spill = input$menu_spill,
+  #       sidecar = read_sidecar(
+  #         district = input$menu_district,
+  #         #profile = input$menu_profile,
+  #         profile = first(OPTIONS$profile[OPTIONS$period_menu == input$menu_period_hotspots]),
+  #         period_start = first(OPTIONS$period_start[OPTIONS$period_menu == input$menu_period_hotspots]),
+  #         period_end = first(OPTIONS$period_end[OPTIONS$period_menu == input$menu_period_hotspots])
+  #       ),
+  #       sidecardesc = PROFILEDESC
+  #       #profile = names(MENU$profile[MENU$profile == input$menu_profile])
+  #     )
+  #     
+  #     rmarkdown::render(tempReport, output_file = file,
+  #                       params = params,
+  #                       envir = new.env(parent = globalenv())
+  #     )
+  #   }
+  # )
+  # 
+  # 
+  # output$reportset_button <- renderUI({
+  #   if(month(Sys.Date()) != 1){
+  #     downloadButton("reportset","Pravidelný reporting")
+  #   }else{
+  #     actionButton("january", "Pravidelný reporting")
+  #   }
+  # })
+  # 
+  # observeEvent(input$january, {
+  #   # Show a modal when the button is pressed
+  #   shinyalert("Chyba!", "Pravidelný reporting není během ledna dustupný.", type = "error")
+  # })
+  # 
+  # output$reportset <- downloadHandler(
+  #   filename = "reportset.zip",
+  #   content = function(file) {
+  #     
+  #     rr_today <- Sys.Date()
+  #     day(rr_today) <- day(rr_today)
+  #     
+  #     # if(month(rr_today) == 12){
+  #     #   shinyalert("Chyba!", 
+  #     #              "Reporty obsahují srovnání nehod, které se staly od 1.1. do konce předcházejícího měsíce. Funkce není dostupná v průběhu ledna.", 
+  #     #              type = "error")
+  #     #   
+  #     #   stop("This is the end.")
+  #     # }
+  #     
+  #     
+  #     shinyalert("Pozor!", 
+  #                "Generování sady reportů může trvat dlouhou dobu. Reporty obsahují srovnání nehod, které se staly od 1.1. do konce předcházejícího měsíce. Obsah reportu může být zásadně ovlivněn naplněností databáze. Hromadné generování není dostupné v průběhu ledna.", 
+  #                type = "warning",
+  #                inputId = "wait_reports",
+  #                showConfirmButton = FALSE
+  #                )
+  #     
+  #     
+  #     # First day of the year
+  #     rr_period1_1 <- rr_today
+  #     month(rr_period1_1) <- 1
+  #     day(rr_period1_1) <- 1
+  #     
+  #     # Last day of the previous month
+  #     rr_period1_2 <- rr_today
+  #     day(rr_period1_2) <- 1
+  #     day(rr_period1_2) <- day(rr_period1_2) - 1
+  #     
+  #     # Baseline period (p1)
+  #     rr_period1 <- c(rr_period1_1,rr_period1_2)
+  #     
+  #     # Comparison period (p2)
+  #     rr_period2 <- rr_period1
+  #     year(rr_period2[1]) <- year(rr_period2[1]) - 1
+  #     year(rr_period2[2]) <- year(rr_period2[2]) - 1
+  #     
+  #     
+  #     rr_districts <- 
+  #       OPTIONS %>% 
+  #       distinct(district) %>% 
+  #       pull(district)
+  #     
+  #     
+  #     tmpdir_path <- tempdir()
+  #     
+  #     for(loop_dist in rr_districts){
+  #       
+  #       accp1 <- read_rds(
+  #         str_c(ACCIDENTS_REPOSITORY,"accidents_",loop_dist,".rds")
+  #       ) %>% 
+  #         filter(
+  #           accident_date >= rr_period1[1],
+  #           accident_date <= rr_period1[2]
+  #         )
+  #       
+  #       accp2 <- read_rds(
+  #         str_c(ACCIDENTS_REPOSITORY,"accidents_",loop_dist,".rds")
+  #       ) %>% 
+  #         filter(
+  #           accident_date >= rr_period2[1],
+  #           accident_date <= rr_period2[2]
+  #         )
+  #       
+  #       params <- list(
+  #         district = names(MENU$district)[MENU$district == loop_dist],
+  #         data_accidents_p1 = accp1,
+  #         data_accidents_p2 = accp2,
+  #         period = rr_period1,
+  #         period_user = FALSE,
+  #         period2 = rr_period2,
+  #         accfilter = input$menu_filteraccidents
+  #       )
+  #       
+  #       
+  #       tempReport <- file.path(tmpdir_path, "report_overview.Rmd")
+  #       file.copy("report_overview.Rmd", tempReport, overwrite = TRUE)
+  #       
+  #       
+  #       rmarkdown::render(tempReport, output_file = file.path(tmpdir_path, str_c(loop_dist,"_overview.html")),
+  #                         params = params,
+  #                         envir = new.env(parent = globalenv())
+  #       )
+  #       
+  #     }
+  #     
+  #     closeAlert(num = 0, id = input$wait_reports)
+  #     
+  #     zip(
+  #       zipfile = file,
+  #       list.files(path = tmpdir_path, pattern = ".html", full.names = TRUE), 
+  #       extras = '-j'
+  #     )
+  #     
+  #   }
+  # )
 } 
 
 

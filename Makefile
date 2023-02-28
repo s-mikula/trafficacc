@@ -1,6 +1,6 @@
 OWNER=smikula/
 IMAGENAME=trafficacc
-VERSIONNAME=latest
+VERSIONNAME=public
 DOCKERDEPS = trafficacc/app.R renv.lock
 
 info:
