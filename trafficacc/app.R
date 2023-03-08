@@ -594,7 +594,7 @@ server <- function(input, output, session) {
       p("2. Vytipovává a ukazuje potenciálně problematická místa na silniční síti v ČR."),
       p("3. Umožňuje základní interaktivní analýzu dopravních nehod."),
       h4("Kontakty (MUNI)"),
-      p("Michal Kvasnička (michal.kvasnicka@econ.muni.cz, backend a indentifikace shluků nehod) a Štěpán Mikula (stepan.mikula@econ.muni.cz, aplikace)."),
+      p("Michal Kvasnička (michal.kvasnicka@econ.muni.cz, backend a indentifikace shluků nehod) a Štěpán Mikula (stepan.mikula@econ.muni.cz, webová aplikace)."),
       h4("Upozornění"),
       p("Aplikace má primárně sloužit jako podpůrný nástroj pro expertní rozhodování. Prezentovaná data vyžadují odbornou interpretaci. Autoři aplikace nenesou odpovědnost za použití aplikace a prezentovaných výstupů a dat."),
       footer = modalButton("Rozumím. Přejít na aplikaci.")
