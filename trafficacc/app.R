@@ -593,8 +593,8 @@ server <- function(input, output, session) {
       p("1. Ukazuje statistiky dopravních nehod pro zvolené okresy."),
       p("2. Vytipovává a ukazuje potenciálně problematická místa na silniční síti v ČR."),
       p("3. Umožňuje základní interaktivní analýzu dopravních nehod."),
-      h4("Kontakty"),
-      p("Aplikaci a výpočet identifikující shluky dopravních nehod (potenciálně problematická místa na silniční síti) vyvinuli Michal Kvasnička (michal.kvasnicka@econ.muni.cz) a Štěpán Mikula (stepan.mikula@econ.muni.cz) z Masarykovy univerzity (MUNI)."),
+      h4("Kontakty (MUNI)"),
+      p("Michal Kvasnička (michal.kvasnicka@econ.muni.cz, backend a indentifikace shluků nehod) a Štěpán Mikula (stepan.mikula@econ.muni.cz, aplikace)."),
       h4("Upozornění"),
       p("Aplikace má primárně sloužit jako podpůrný nástroj pro expertní rozhodování. Prezentovaná data vyžadují odbornou interpretaci. Autoři aplikace nenesou odpovědnost za použití aplikace a prezentovaných výstupů a dat."),
       footer = modalButton("Rozumím. Přejít na aplikaci.")

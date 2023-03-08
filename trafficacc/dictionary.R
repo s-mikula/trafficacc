@@ -318,7 +318,7 @@ PROFILEDESC <- list(
 AUTHORS <- list(
     line1 = "Vývoj webové aplikace a software na identifikaci klastrů nehod na silniční síti byl podpořen grantem TA ČR (CK01000049): ",
     line2 = "Tvorba pokročilých nástrojů pro analýzu dopravních nehod pro Policii ČR",
-    line3 = "Autoři: Michal Kvasnička (michal.kvasnicka@econ.muni.cz) & Štěpán Mikula (stepan.mikula@econ.muni.cz)"
+    line3 = "Kontakty: Michal Kvasnička (michal.kvasnicka@econ.muni.cz) & Štěpán Mikula (stepan.mikula@econ.muni.cz)"
 )
 
 ALERT <- list(
