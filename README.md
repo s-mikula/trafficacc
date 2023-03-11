@@ -16,4 +16,4 @@ Aplikace vyžaduje data, která jsou generována "výpočetní" aplikací -- a t
 
 Kontakt: Štěpán Mikula (stepan.mikula\@econ.muni.cz)
 
-[![](logo_TACR_dopln.png){width="250"}](https://www.tacr.cz/)
+[![](https://tacr.cz/logotypy/logo_TACR_dopln_inv.png){width="250"}](https://www.tacr.cz/)
