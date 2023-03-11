@@ -53,6 +53,7 @@ ui <- dashboardPage(
       img(src='muni-lg-white.png', align = "center", width = "100%"),br(),
       img(src='muni-lg-cze-black.png', align = "center", width = "100%"),br(),
       img(src='cuni.png', align = "center", width = "100%"),br(),
+      img(src='tacr.png', align = "center", width = "100%"),br(),
       img(src='Doprava.png', align = "center", width = "100%"),br()
     ),
     width = 200,
